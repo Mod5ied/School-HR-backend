@@ -15,7 +15,7 @@ export class StudentsService {
     private readonly studentModel: Model<Students>,
   ) {}
 
-  async insertStudent(body: Student): Promise<Students> {
+  async insertStudent(body: Students): Promise<Students> {
     const newStudent = new this.studentModel({
       email: body.email,
       firstname: body.firstname,
@@ -49,7 +49,6 @@ export class StudentsService {
     const result = await this.studentModel
       .updateOne({ email: studentEmail }, body, { new: true })
       .exec();
-
     return { updated: result.acknowledged };
   }
 

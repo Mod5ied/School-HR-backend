@@ -1,11 +1,14 @@
-import { Prop, SchemaFactory,Schema } from "@nestjs/mongoose"
+import { Students } from "src/primary_entities/students/students.models"
+import { Prop, SchemaFactory, Schema } from "@nestjs/mongoose"
 import mongoose, { Schema as MongooseSchema } from "mongoose"
-import { Students } from "src/students/students.models"
 
 @Schema()
-export class LessonFee {
+export class CumulativeFee {
     @Prop()
     _id: MongooseSchema.Types.ObjectId
+
+    @Prop({ default: "Lesson Fee", required: true })
+    paymentDesription: string
 
     @Prop()
     amountPaid: number
@@ -18,5 +21,4 @@ export class LessonFee {
     student: Students
 }
 
-
-export const CumulativeFeesSchema = SchemaFactory.createForClass(LessonFee)
+export const CumulativeFeesSchema = SchemaFactory.createForClass(CumulativeFee)
