@@ -1,14 +1,23 @@
+import {
+  SeniorScore,
+  JuniorScore,
+} from 'src/entity/tertiary_entities/academic_models/scores/scores.model';
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
-import { SeniorScore, JuniorScore } from 'src/academic_models/scores/scores.model';
 
 export interface Students {
-  id: string;
+  id?: string;
   email: string;
   firstname: string;
   lastname: string;
   gender: string;
   scores: undefined | number[];
+  role: string;
+  permissions: {
+    read: boolean;
+    write: boolean;
+    //writeOwn: boolean /* should permit user to edit select 'own' props. */
+  };
 }
 
 export type StudentUpdate = {
@@ -17,6 +26,11 @@ export type StudentUpdate = {
   lastname: string | undefined;
   gender: string | undefined;
   scores: undefined | number[];
+  role: string;
+  permissions: {
+    read: boolean;
+    write: boolean;
+  };
 };
 
 export const flatStudent = (students: Students[]) => {
@@ -27,6 +41,11 @@ export const flatStudent = (students: Students[]) => {
     lastname: stud.lastname,
     gender: stud.gender,
     scores: stud.scores,
+    role: stud.role,
+    // permissions: {
+    //   read: boolean,
+    //   write: boolean
+    // }
   }));
 };
 
@@ -47,13 +66,22 @@ export class Student {
   /* if student is junior, 'juniorGrades' is populated, else 'seniorGrades' is populated */
 
   @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'JuniorScore' } })
-  juniorGrades: JuniorScore
+  juniorGrades: JuniorScore;
 
   @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'SeniorScore' } })
-  seniorGrades: SeniorScore
+  seniorGrades: SeniorScore;
 
   @Prop({ required: true })
-  dob: Date
+  dob: Date;
+
+  @Prop({ default: 'user' })
+  role: string;
+
+  @Prop({ required: true })
+  permissions: {
+    read: boolean;
+    write: boolean;
+  };
 }
 
 export const StudentSchema = SchemaFactory.createForClass(Student);
