@@ -1,6 +1,5 @@
-import { Teacher } from "src/primary_entities/staff/teachers/teachers.model"
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
-import mongoose, { Schema as MongooseSchema } from "mongoose"
+import { Schema as MongooseSchema } from "mongoose"
 
 
 @Schema()
@@ -12,13 +11,13 @@ export class Note {
     dateUploaded: Date
 
     @Prop({ required: true, lowercase: true })
-    noteTitle: string
-
-    @Prop({ required: true, lowercase: true })
     class: string
+    
+    @Prop({ required: true, lowercase: true })
+    subject: string
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' })
-    teacher: Teacher
+    @Prop()
+    data: [Blob]
 }
 
 export const NotesSchema = SchemaFactory.createForClass(Note)
