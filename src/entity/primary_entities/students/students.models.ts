@@ -1,7 +1,4 @@
-import {
-  SeniorScore,
-  JuniorScore,
-} from 'src/entity/tertiary_entities/academic_models/scores/scores.model';
+import { SeniorScore, JuniorScore } from 'src/entity/tertiary_entities/academic_models/scores/scores.model';
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 
@@ -33,26 +30,10 @@ export type StudentUpdate = {
   };
 };
 
-export const flatStudent = (students: Students[]) => {
-  return students.map((stud) => ({
-    id: stud.id,
-    email: stud.email,
-    firstname: stud.firstname,
-    lastname: stud.lastname,
-    gender: stud.gender,
-    scores: stud.scores,
-    role: stud.role,
-    // permissions: {
-    //   read: boolean,
-    //   write: boolean
-    // }
-  }));
-};
-
 @Schema()
 export class Student {
-  @Prop({ lowercase: true })
-  email: string;
+  @Prop({ required: true })
+  regNumber: string
 
   @Prop({ required: true, lowercase: true })
   firstname: string;
@@ -62,14 +43,6 @@ export class Student {
 
   @Prop({ required: true, lowercase: true })
   gender: string;
-
-  /* if student is junior, 'juniorGrades' is populated, else 'seniorGrades' is populated */
-
-  @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'JuniorScore' } })
-  juniorGrades: JuniorScore;
-
-  @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'SeniorScore' } })
-  seniorGrades: SeniorScore;
 
   @Prop({ required: true })
   dob: Date;
@@ -82,6 +55,20 @@ export class Student {
     read: boolean;
     write: boolean;
   };
+
+  /* OPTIONAL FIELDS */
+  @Prop({ lowercase: true })
+  email: string;
+
+  @Prop({})
+  examNumber: string
+
+  /* if student is junior, 'juniorGrades' is populated, else 'seniorGrades' is populated */
+  @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'JuniorScore' } })
+  juniorGrades: JuniorScore;
+
+  @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'SeniorScore' } })
+  seniorGrades: SeniorScore;
 }
 
 export const StudentSchema = SchemaFactory.createForClass(Student);

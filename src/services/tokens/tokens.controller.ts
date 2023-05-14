@@ -1,12 +1,6 @@
+import { Controller, Post, Get, Body, Query } from '@nestjs/common';
 import { TokenService } from './tokens.service';
 import { Users } from './tokens.types';
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Param,
-} from '@nestjs/common';
 
 @Controller('token')
 export class TokenCtrlr {
@@ -17,9 +11,8 @@ export class TokenCtrlr {
     return this.tokenService.generateTokens(user);
   }
 
-  @Post('/verify/:token/:email')
-  async verifyAccessToken(@Param('token') params: { user_token: string, user_email: string }) {
-    const { user_token, user_email } = params;
-    return this.tokenService.runVerifyAccessToken(user_token, user_email);
+  @Post('verify')
+  async verifyAccessToken(@Query('token') token: string, @Query('email') email: string) {
+    return this.tokenService.runVerifyAccessToken(token, email);
   }
 }

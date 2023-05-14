@@ -1,4 +1,4 @@
-import { Note } from 'src/tertiary_entities/academic_models/notes/notes.model';
+import { Note } from 'src/entity/tertiary_entities/academic_models/notes/notes.model';
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 

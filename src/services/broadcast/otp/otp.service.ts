@@ -1,59 +1,31 @@
-import { Injectable } from "@nestjs/common"
-import * as speakeasy from "speakeasy"
-
+import { ErrorService } from "src/services/errors/error.service";
+import { Injectable, Inject, CACHE_MANAGER } from "@nestjs/common"
+import { Cache } from "cache-manager";
 
 @Injectable()
 export class OtpService {
-    OTP_DIGITS = 6
-    OTP_STEPS = 120
+    OTP_DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
     constructor(
-        private readonly speakeasyPkg: typeof speakeasy,
-        private readonly secret = speakeasy.generateSecret().base32,
+        private readonly errorManager: ErrorService,
+        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache
     ) { }
 
-    // public generateOtp() {
-    //     const otp = this.speakeasyPkg.totp({
-    //         secret: this.secret,
-    //         encoding: "base32",
-    //         step: this.OTP_STEPS,
-    //         digits: this.OTP_DIGITS,
-    //     })
-
-    //     /* encode the otp as a number */
-    //     // const otpNumber = parseInt(Buffer.from(otp, 'utf8').toString('hex'), 16)
-
-    //     return { otp, secret: this.secret }
-    // }
-    public generateOtp(): { otp: string; secret: string } {
-        const { base32: secret } = this.speakeasyPkg.generateSecret({ length: 20 });
-        const otp = this.speakeasyPkg.totp({
-            secret,
-            encoding: 'base32',
-            step: 30,
-        });
-
-        return { otp, secret };
+    public async generateOtp(user: string): Promise<{ otp: number[] }> {
+        const otp: number[] = [];
+        for (let i = 0; i < 6; i++) {
+            otp.push(this.OTP_DIGITS[Math.floor(Math.random() * 10)])
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        /* save the otp to redis-cache and when user send it back compare the two and respond. */
+        await this.cacheManager.set("user", { user, otp })
+        return { otp };
     }
 
-
-    // public verifyOtp(otpNumber: string): boolean {
-    //     // const otp = Buffer.from(otpNumber.toString(16), 'hex').toString('utf8')
-    //     const verified = this.speakeasyPkg.totp.verify({
-    //         secret: this.secret,
-    //         encoding: 'base32',
-    //         token: otpNumber,
-    //         window: 1
-    //     });
-    //     return verified;
-    // }
-    public verifyOtp(otpNumber: string, secret: string): boolean {
-        const verified = this.speakeasyPkg.totp.verify({
-            secret,
-            encoding: 'base32',
-            token: otpNumber,
-            step: 30,
-        });
-        return verified;
+    public async verifyOtp(otpNumber: number) {
+        /* fetch the otp doc from the redis-cache and verify if it exists. returns truthy or falsy */
+        const cachedOtp = await this.cacheManager.get("user")
+        if (otpNumber === cachedOtp) return true
+        return this.errorManager.unauthorizedRequest("Token is invalid!")
     }
 
 }

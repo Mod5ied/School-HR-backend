@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  flatStudent,
   Student,
   Students,
   StudentUpdate,
@@ -42,7 +41,7 @@ export class StudentsService {
       .findOne({ email: studentEmail })
       .lean();
     if (!student) throw new NotFoundException('Student was not found');
-    return flatStudent([student])[0];
+    return student
   }
 
   async updateStudent(studentEmail: string, body: StudentUpdate) {

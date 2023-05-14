@@ -32,8 +32,9 @@ export class TokenService {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private buildVerificationLink(email: string, hashedToken: string): string {
-    return `\${LINK}verify/?token=\${hashedToken}/?email=\${email}`;
+    return `\${LINK}verify?token=\${hashedToken}&email=\${email}`;
   }
+  
 
   private buildEmailContent(vLink: string): string {
     return `

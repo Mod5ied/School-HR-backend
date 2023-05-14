@@ -1,4 +1,4 @@
-import { Students } from "src/primary_entities/students/students.models"
+import { Student } from "src/entity/primary_entities/students/students.models"
 import { Prop, SchemaFactory, Schema } from "@nestjs/mongoose"
 import mongoose, { Schema as MongooseSchema } from "mongoose"
 
@@ -18,7 +18,7 @@ export class CumulativeFee {
 
     /* here, the entire student hydrated object is gummed into this doc hence making it kinda heavy. */
     @Prop({ required: true, type: mongoose.Schema.Types.ObjectId, ref: 'Students' })
-    student: Students
+    student: Student
 }
 
 export const CumulativeFeesSchema = SchemaFactory.createForClass(CumulativeFee)

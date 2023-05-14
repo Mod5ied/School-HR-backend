@@ -42,13 +42,6 @@ describe('OtpService', () => {
     });
 
     describe('verifyOtp', () => {
-        // it('should verify a valid OTP', () => {
-        //     const { otp, secret } = otpService.generateOtp();
-
-        //     const isOtpValid = otpService.verifyOtp(otp);
-
-        //     expect(isOtpValid).toBe(true);
-        // });
         it('should verify a valid OTP', async () => {
             const { otp, secret } = otpService.generateOtp();
 
