@@ -1,61 +1,47 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  Student,
-  Students,
-  StudentUpdate,
-} from './students.models';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { IStudent, StudentUpdate } from "./student.interface"
 import { InjectModel } from '@nestjs/mongoose';
+import { Student } from './students.models';
 import { Model } from 'mongoose';
 
 @Injectable()
 export class StudentsService {
-  constructor(
-    @InjectModel(Student.name)
-    private readonly studentModel: Model<Students>,
-  ) {}
+  constructor(@InjectModel(Student.name) private readonly studentModel: Model<Student>) { }
 
-  async insertStudent(body: Students): Promise<Students> {
+  async insertStudent(body: IStudent): Promise<IStudent> {
     const newStudent = new this.studentModel({
-      email: body.email,
+      regNumber: body.regNumber,
       firstname: body.firstname,
       lastname: body.lastname,
       gender: body.gender,
+      dob: body.dob
     });
-    return await newStudent.save();
+    const response = await newStudent.save();
+    if (!response) throw new BadRequestException('New Student was not created!')
+    return response
   }
 
-  async fetchStudents(): Promise<Students[]> {
+  async fetchStudents(): Promise<IStudent[]> {
     const students = await this.studentModel.find().lean().exec();
-    return students.map((stud) => ({
-      id: stud.id,
-      email: stud.email,
-      firstname: stud.firstname,
-      lastname: stud.lastname,
-      gender: stud.gender,
-      scores: stud.scores,
-    }));
+    if (!students) throw new NotFoundException('Students were not found!')
+    return students
   }
 
-  async fetchOneStudent(studentEmail: string): Promise<Students> {
-    const student = await this.studentModel
-      .findOne({ email: studentEmail })
-      .lean();
-    if (!student) throw new NotFoundException('Student was not found');
+  async fetchOneStudent(studentRegNum: string): Promise<IStudent> {
+    const student = await this.studentModel.findOne({ regNumber: studentRegNum }).lean();
+    if (!student) throw new NotFoundException('Student was not found!');
     return student
   }
 
-  async updateStudent(studentEmail: string, body: StudentUpdate) {
-    const result = await this.studentModel
-      .updateOne({ email: studentEmail }, body, { new: true })
-      .exec();
+  async updateStudent(studentRegNum: string, body: StudentUpdate) {
+    const result = await this.studentModel.updateOne({ regNumber: studentRegNum }, body, { new: true }).exec();
+    if (!result.acknowledged) throw new BadRequestException('Student update operation failed!')
     return { updated: result.acknowledged };
   }
 
-  async deleteStudent(studentEmail: string) {
-    const studResult = await this.studentModel
-      .deleteOne({ email: studentEmail })
-      .exec();
+  async deleteStudent(studentRegNum: string) {
+    const studResult = await this.studentModel.deleteOne({ regNumber: studentRegNum }).exec();
     if (studResult.deletedCount > 0) return { deleted: true };
-    return { deleted: false };
+    throw new BadRequestException('Student delete operation failed!')
   }
 }

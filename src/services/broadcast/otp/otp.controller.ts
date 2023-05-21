@@ -13,7 +13,7 @@ export class OtpController {
 
     @Post("/verify/:otp")
     verifyOtp(@Param('otp') otp: number) {
+        /* re-write this to to pass the otp via the 'bearer-token' option in headers. */
         return this.otpService.verifyOtp(otp)
     }
-}
-
+}   

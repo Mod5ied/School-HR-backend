@@ -8,140 +8,145 @@ type Subject = {
     Exams: number;
 }
 
+/* The reason you need to specify the type in the @Prop decorator is that 
+    Mongoose cannot automatically determine the type of the Subject object in your schema. 
+    By explicitly defining the type as Object, you are informing Mongoose that 
+    the Subject type should be treated as a plain object in the schema. */
+
 @Schema()
 export class SeniorScore {
     /* sciences. */
-    @Prop()
+    @Prop({ type: Object })
     englishLanguage: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     mathematics: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     biology: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     physics: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     computerStudies: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     economics: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     agriculturalScience: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     chemistry: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     civicEducation: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     geography: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     furtherMaths: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     dataProcessing: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     crk: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     frenchLanguage: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     technicalDrawing: Subject
 
     /* arts. */
-    @Prop()
+    @Prop({ type: Object })
     literature: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     government: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     financialAccounts: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     commerce: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     igboLanguage: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     marketing: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     homeManagement: Subject
 }
 
 @Schema()
 export class JuniorScore {
-    @Prop()
+    @Prop({ type: Object })
     englishStudies: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     mathematics: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     furtherMaths: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     basicScience: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     basicTechnology: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     businessStudies: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     phe: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     crk: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     civicEducation: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     agriculturalScience: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     literature: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     socialStudies: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     igboLanguage: Subject
 }
 
 @Schema()
 export class PupilScore {
-    @Prop()
+    @Prop({ type: Object })
     englishLanguage: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     mathematics: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     igboLanguage: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     culturalAndCreativeArts: Subject
 
-    @Prop()
-    religionAndNationalValues: Subject  
+    @Prop({ type: Object })
+    religionAndNationalValues: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     basicScienceAndTech: Subject
 
-    @Prop()
+    @Prop({ type: Object })
     prevocationalStudies: Subject
 }
 

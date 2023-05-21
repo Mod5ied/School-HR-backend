@@ -1,14 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { ACCESS_SECRET, LINK, REFRESH_SECRET, SECRET } from './tokens.secrets';
 import { ResponseService } from '../broadcast/response/reponse.tokens';
 import { RefreshToken } from './models/refreshtokens.model';
 import { AccessToken } from './models/accesstokens.model';
 import { CryptService } from '../encrypt/tokens.encrypt';
-import { ErrorService } from '../errors/error.service';
 import { IToken, Users } from './tokens.types';
 import { InjectModel } from '@nestjs/mongoose';
 import { JwtService } from '@nestjs/jwt/dist';
-import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 
 @Injectable()
@@ -17,8 +16,6 @@ export class TokenService {
     private readonly responseService: ResponseService,
 
     private readonly cryptService: CryptService,
-
-    private readonly errorService: ErrorService,
 
     private readonly jwtService: JwtService,
 
@@ -34,7 +31,7 @@ export class TokenService {
   private buildVerificationLink(email: string, hashedToken: string): string {
     return `\${LINK}verify?token=\${hashedToken}&email=\${email}`;
   }
-  
+
 
   private buildEmailContent(vLink: string): string {
     return `
@@ -53,7 +50,7 @@ export class TokenService {
       tokenPermissions: permissions,
       role: role,
     }).catch(error => {
-      return this.errorService.badRequest(`AccessToken-Doc creation failed! - ${error.message}`);
+      throw new BadRequestException(`AccessToken-Doc creation failed! - ${error.message}`)
     })
   }
 
@@ -95,24 +92,25 @@ export class TokenService {
     const vLink = this.buildVerificationLink(email, hashedToken);
     const emailContent = this.buildEmailContent(vLink);
 
-    return this.responseService.respondToEmail(hashedToken, {
-      to: email,
-      from: SECRET.email,
-      subject: SECRET.subject,
-      html: emailContent
-    }).catch(error => {
-      return this.errorService.badRequest(error.message);
-    })
+    /* send to the terminal first */
+    return { emailContent }
+    // return this.responseService.respondToEmail(hashedToken, {
+    //   to: email,
+    //   from: SECRET.email,
+    //   subject: SECRET.subject,
+    //   html: emailContent
+    // }).catch(error => {
+    //   return this.errorService.badRequest(error.message);
+    // })
   }
 
   public async runVerifyAccessToken(token: string, email: string) {
-
     const validToken = await this.cryptService.decryptTokens(token, email);
     if (validToken.match)
       return this.responseService.respondToClient(token, {
         role: validToken.doc.role, permissions: validToken.doc.tokenPermissions
       });
 
-    return this.errorService.unauthorizedRequest('Token verification failed - Invalid token');
+    throw new UnauthorizedException('Token verification failed - Invalid token');
   }
 }

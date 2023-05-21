@@ -7,15 +7,15 @@ import {
   Patch,
   Delete,
 } from '@nestjs/common';
-import { Students, StudentUpdate } from './students.models';
+import { IStudent, StudentUpdate } from './student.interface';
 import { StudentsService } from './students.service';
 
-@Controller('students')
+@Controller("students")
 export class StudentsController {
-  constructor(private studentsService: StudentsService) {}
+  constructor(private studentsService: StudentsService) { }
 
   @Post()
-  async addStudents(@Body() student: Students) {
+  async addStudents(@Body() student: IStudent) {
     const newStudent = await this.studentsService.insertStudent(student);
     return newStudent;
   }
@@ -25,21 +25,18 @@ export class StudentsController {
     return this.studentsService.fetchStudents();
   }
 
-  @Get(':email')
-  async getOneStudent(@Param('email') studentEmail: string) {
-    const student = await this.studentsService.fetchOneStudent(studentEmail);
+  @Get(':regnumber')
+  async getOneStudent(@Param('regnumber') regnumber: string) {
+    const student = await this.studentsService.fetchOneStudent(regnumber);
     return student;
   }
-  
-  @Patch(':id')
-  async updateOneStudent(
-    @Param('id') studentID: string,
-    @Body() update: StudentUpdate,
-  ) {
-    return await this.studentsService.updateStudent(studentID, update);
+
+  @Patch(':regnumber')
+  async updateOneStudent(@Param('regnumber') regnumber: string, @Body() update: StudentUpdate) {
+    return await this.studentsService.updateStudent(regnumber, update);
   }
 
-  @Delete(':id')
+  @Delete(':regnumber')
   deleteOneStudent(@Param('id') studentID: string) {
     return this.studentsService.deleteStudent(studentID);
   }

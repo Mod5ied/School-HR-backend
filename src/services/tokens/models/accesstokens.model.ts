@@ -31,7 +31,7 @@ export class AccessToken {
   /* then the verifier ensures that only access-tokens with read & write permissions
          set to true can make lasting edits to any records or accounts.
          */
-  @Prop({ required: true, immutable: true })
+  @Prop({ required: true, immutable: true , type: Object})
   tokenPermissions: {
     read: boolean;
     write: boolean;

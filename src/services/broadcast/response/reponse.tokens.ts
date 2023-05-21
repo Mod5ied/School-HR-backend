@@ -18,15 +18,15 @@ export class ResponseService {
   }
 
   /** Response method sends the login link with token to users via email.  */
-  public async respondToEmail(response: any, options: EmailOptions) {
-    const { TokensLogger } = await import('../logger/logger.tokens.js');
-    const loggerT = await this.moduleRef.resolve(TokensLogger);
-    try {
-      return loggerT.logResponseToMail(response, options);
-    } catch (e) {
-      return loggerT.logError(e);
-    }
-  }
+  // public async respondToEmail(response: any, options: EmailOptions) {
+  //   const { TokensLogger } = await import('../logger/logger.tokens.js');
+  //   const loggerT = await this.moduleRef.resolve(TokensLogger);
+  //   try {
+  //     return loggerT.logResponseToMail(response, options);
+  //   } catch (e) {
+  //     return loggerT.logError(e);
+  //   }
+  // }
 
   /** Response method confirms tokens validity to client. */
   public async respondToClient(token: string, { role, permissions }, info = "") {

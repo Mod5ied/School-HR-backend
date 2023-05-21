@@ -20,7 +20,7 @@ export class RefreshToken {
   })
   tokenEmail: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Object })
   tokenPermissions: {
     read: boolean;
     write: boolean;

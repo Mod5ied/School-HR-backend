@@ -20,6 +20,7 @@ import { OtpService } from "./otp.service";
         })
     ],
     controllers: [OtpController],
-    providers: [OtpService]
+    providers: [OtpService],
+    exports: [OtpService]
 })
 export class OtpModule { }

@@ -1,5 +1,6 @@
 import { Note } from 'src/entity/tertiary_entities/academic_models/notes/notes.model';
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
+import { Permissions } from "./teachers.interface"
 import * as mongoose from 'mongoose';
 
 export interface Teachers {
@@ -9,11 +10,7 @@ export interface Teachers {
   lastname: string | undefined;
   notes: any;
   role: string;
-  permissions: {
-    read: boolean;
-    write: boolean;
-    //writeOwn: boolean /* should permit user to edit select 'own' props. */
-  };
+  permissions: Permissions;
 }
 
 @Schema()
@@ -35,10 +32,10 @@ export class Teacher {
   role: string;
 
   @Prop({ required: true })
-  permissions: {
-    read: boolean;
-    write: boolean;
-  };
+  subjects: string[]
+
+  @Prop({ required: true, type: Object })
+  permissions: Permissions;
 }
 
 export const TeachersSchema = SchemaFactory.createForClass(Teacher);

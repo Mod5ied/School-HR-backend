@@ -1,12 +1,10 @@
-import { ErrorService } from "src/services/errors/error.service";
-import { Injectable, Inject, CACHE_MANAGER } from "@nestjs/common"
+import { Injectable, Inject, CACHE_MANAGER, UnauthorizedException } from "@nestjs/common"
 import { Cache } from "cache-manager";
 
 @Injectable()
 export class OtpService {
     OTP_DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0]
     constructor(
-        private readonly errorManager: ErrorService,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache
     ) { }
 
@@ -25,7 +23,6 @@ export class OtpService {
         /* fetch the otp doc from the redis-cache and verify if it exists. returns truthy or falsy */
         const cachedOtp = await this.cacheManager.get("user")
         if (otpNumber === cachedOtp) return true
-        return this.errorManager.unauthorizedRequest("Token is invalid!")
+        throw new UnauthorizedException("Token is invalid!")
     }
-
 }
