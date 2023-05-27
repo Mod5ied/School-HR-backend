@@ -1,4 +1,4 @@
-import { SeniorScore, JuniorScore } from 'src/entity/tertiary_entities/academic_models/scores/scores.model';
+import { SeniorGrade, JuniorGrade } from 'src/entity/tertiary_entities/academic_models/grades/grades.model';
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
 import { Permissions } from './student.interface';
@@ -35,10 +35,10 @@ export class Student {
 
   /* if student is junior, 'juniorGrades' is populated, else 'seniorGrades' is populated */
   @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'JuniorScore' } })
-  juniorGrades: JuniorScore;
+  juniorGrades: JuniorGrade;
 
   @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'SeniorScore' } })
-  seniorGrades: SeniorScore;
+  seniorGrades: SeniorGrade;
 }
 
 export const StudentSchema = SchemaFactory.createForClass(Student);

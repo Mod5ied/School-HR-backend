@@ -86,7 +86,7 @@ export class TokenService {
     await this.generateTokenDoc(this.refreshToken, user, refreshToken);
   }
 
-  public async generateTokens({ email, permissions, role }) {
+  public async generateTokens({ email, permissions, role }: Partial<Users>) {
     const hashedToken = await this.generateAccessToken({ email, permissions, role });
     await this.generateRefreshToken({ email, permissions, role });
     const vLink = this.buildVerificationLink(email, hashedToken);

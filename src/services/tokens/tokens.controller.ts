@@ -10,7 +10,7 @@ export class TokenCtrlr {
   constructor(private tokenService: TokenService) { }
 
   @Get()
-  async getUserTokens(@Body() user: Users) {
+  async getUserTokens(@Body() user: Partial<Users>) {
     return this.tokenService.generateTokens(user);
   }
 

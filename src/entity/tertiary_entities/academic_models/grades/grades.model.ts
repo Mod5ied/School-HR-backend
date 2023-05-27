@@ -14,7 +14,9 @@ type Subject = {
     the Subject type should be treated as a plain object in the schema. */
 
 @Schema()
-export class SeniorScore {
+export class SeniorGrade {
+    @Prop({ required: true })
+    student: string
     /* sciences. */
     @Prop({ type: Object })
     englishLanguage: Subject
@@ -85,7 +87,10 @@ export class SeniorScore {
 }
 
 @Schema()
-export class JuniorScore {
+export class JuniorGrade {
+    @Prop({ required: true })
+    student: string
+
     @Prop({ type: Object })
     englishStudies: Subject
 
@@ -127,7 +132,10 @@ export class JuniorScore {
 }
 
 @Schema()
-export class PupilScore {
+export class PupilGrade {
+    @Prop({ required: true })
+    pupil: string
+
     @Prop({ type: Object })
     englishLanguage: Subject
 
@@ -150,6 +158,6 @@ export class PupilScore {
     prevocationalStudies: Subject
 }
 
-export const SeniorScoresSchema = SchemaFactory.createForClass(SeniorScore)
-export const JuniorScoresSchema = SchemaFactory.createForClass(JuniorScore)
-export const PupilScoresSchema = SchemaFactory.createForClass(PupilScore)
+export const SeniorGradesSchema = SchemaFactory.createForClass(SeniorGrade)
+export const JuniorGradesSchema = SchemaFactory.createForClass(JuniorGrade)
+export const PupilGradesSchema = SchemaFactory.createForClass(PupilGrade)

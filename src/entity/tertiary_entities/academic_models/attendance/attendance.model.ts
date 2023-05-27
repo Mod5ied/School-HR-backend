@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose"
 
 /* info: this model applies both for Students and Staff */
 type DayType = {
+    /* present day. */
     date: Date,
     rollcall: {
         timeTaken: Date,
@@ -11,19 +12,25 @@ type DayType = {
 
 @Schema()
 export class Attendance {
-    @Prop()
+    @Prop({ required: true, unique: true })
+    name: string
+
+    @Prop({ required: true })
+    class: string
+
+    @Prop({ type: Object })
     monday: DayType
 
-    @Prop()
+    @Prop({ type: Object })
     tuesday: DayType
 
-    @Prop()
+    @Prop({ type: Object })
     wednesday: DayType
 
-    @Prop()
+    @Prop({ type: Object })
     thursday: DayType
 
-    @Prop()
+    @Prop({ type: Object })
     friday: DayType
 }
 

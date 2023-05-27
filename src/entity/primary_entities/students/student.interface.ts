@@ -1,4 +1,4 @@
-import { JuniorScore, SeniorScore } from "src/entity/tertiary_entities/academic_models/scores/scores.model";
+import { JuniorGrade, SeniorGrade } from "src/entity/tertiary_entities/academic_models/grades/grades.model";
 
 export interface Permissions {
     read: boolean;
@@ -17,8 +17,8 @@ export interface IStudent {
     email?: string;
     examNumber?: string
     /* if student is junior, 'juniorGrades' is populated, else 'seniorGrades' is populated */
-    juniorGrades?: JuniorScore;
-    seniorGrades?: SeniorScore;
+    juniorGrades?: JuniorGrade;
+    seniorGrades?: SeniorGrade;
     permissions?: Permissions
 }
 

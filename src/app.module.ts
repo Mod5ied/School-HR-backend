@@ -8,6 +8,7 @@ import { ZodValidationPipe } from 'nestjs-zod';
 import { Module } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import { TeachersModule } from './entity/primary_entities/staff/teachers/teachers.module';
 // import { AUTH_SECRET } from './services/tokens/tokens.secrets';
 // import { TokensLoggerModule } from './services/broadcast/logger/logger.module';
 
@@ -16,6 +17,7 @@ import { JwtModule } from '@nestjs/jwt';
     OtpModule,
     TokensModule,
     StudentsModule,
+    TeachersModule,
     ConfigModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
