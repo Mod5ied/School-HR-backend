@@ -1,14 +1,17 @@
-import { Controller, Get, Post, Patch, Delete, Param } from "@nestjs/common";
+import { Controller, Get, Post, Patch, Delete, Param, UseInterceptors } from "@nestjs/common";
+import { NumberInterceptor } from "../_interceptors/phone_number.intercept";
+import { GradeInterceptor } from "../_interceptors/grades.intercept";
 import { TeachersServices } from "./teachers.services"
 
 @Controller("teachers")
+@UseInterceptors(NumberInterceptor, GradeInterceptor)
 export class TeachersControllers {
     constructor(
         private readonly teachersServices: TeachersServices
     ) { }
 
     /* retrieval routes */
-    @Get('account/:number/:school')
+    @Get('account/:number()/(:school)')
     async returnAccount(@Param() params: { number: number, school: string }) {
         const { number, school } = params
         return this.teachersServices.fetchAccount(number, school)
@@ -30,10 +33,11 @@ export class TeachersControllers {
         return this.teachersServices.fetchSubjects(firstname, school)
     }
 
-    @Get("grades/:student/:level")
-    async returnGrades(@Param() params: { student: string, level: string }) {
-        const { level, student } = params
-        return this.teachersServices.fetchGrades(student, level)
+    /* reg-no must exist from (01-09) & (10-999), level can be either (senior|junior|pupil)*/
+    @Get('grades/:reg_numb(ss[1-3]-(?:0\\d|[1-9]\\d{0,2}))/(:level(senior|junior|pupil))')
+    async returnGrades(@Param() params: { reg_numb: string, level: string }) {
+        const { level, reg_numb } = params
+        return this.teachersServices.fetchGrades(reg_numb, level)
     }
 
     @Get("notes/:subject")

@@ -68,16 +68,16 @@ export class TeachersServices {
     }
 
     /** level can be either of the items in list - ['junior', 'senior', null]  */
-    public async fetchGrades(student: string, level: string) {
+    public async fetchGrades(regNum: string, level: string) {
         /* grades are not updated on a daily, rather on a weekly or bi-weekly basis.. */
         /* cache for grades lasts for about 10mins, hence cacheable. */
         if (level === 'senior') {
-            const grades = await this.seniorGrade.findOne({ student }).lean().exec()
+            const grades = await this.seniorGrade.findOne({ regNum: regNum  }).lean().exec()
             await this.cacheManager.set("grades", grades, 900)
             return { grades }
         }
         else if (level === "junior") {
-            const grades = await this.juniorGrade.findOne({ student }).lean().exec()
+            const grades = await this.juniorGrade.findOne({ regNum: regNum }).lean().exec()
             await this.cacheManager.set("grades", grades, 900)
             return { grades }
         }
@@ -92,7 +92,7 @@ export class TeachersServices {
     public async fetchNotes(subject: string) {
         /* notes are not updated regularly, only at the end of the day.. */
         /* hence, it can be cached. */
-        if (subject === 'string') {
+        if (typeof subject === 'string') {
             const notes = await this.notes.findOne({ subject }).exec()
 
             if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`)

@@ -15,8 +15,10 @@ type Subject = {
 
 @Schema()
 export class SeniorGrade {
-    @Prop({ required: true })
-    student: string
+    @Prop({ required: true, lowercase: true })
+    regNum: string
+    /* eg: 'ss1-09, ss1-05 */
+
     /* sciences. */
     @Prop({ type: Object })
     englishLanguage: Subject
@@ -88,8 +90,9 @@ export class SeniorGrade {
 
 @Schema()
 export class JuniorGrade {
-    @Prop({ required: true })
-    student: string
+    @Prop({ required: true,lowercase: true })
+    regNum: string
+    /* eg: 'js1-05, js2-07' */
 
     @Prop({ type: Object })
     englishStudies: Subject
@@ -133,8 +136,8 @@ export class JuniorGrade {
 
 @Schema()
 export class PupilGrade {
-    @Prop({ required: true })
-    pupil: string
+    @Prop({ required: true, lowercase: true })
+    regNum: string
 
     @Prop({ type: Object })
     englishLanguage: Subject

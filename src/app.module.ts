@@ -24,7 +24,6 @@ import { TeachersModule } from './entity/primary_entities/staff/teachers/teacher
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
         const uri = configService.get<string>('DB_URI');
-        console.log(uri); // Make sure the value is being read correctly
         return {
           uri,
           useNewUrlParser: true,
