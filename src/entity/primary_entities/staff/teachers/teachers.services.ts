@@ -25,80 +25,93 @@ export class TeachersServices {
 
     /** retrives the teachers account */
     public async fetchAccount(number: number, school: string) {
-        /* the teachers account is always returned frequently, but... */
-        /* few changes are frequently to their direct account object, hence cacheable */
+        //Todo: place the init-fetch within a cache-interceptor!
+        const cachedAccount = await this.cacheManager.get<string>("account")
+
+        if (cachedAccount) return JSON.parse(cachedAccount)
         const account = await this.teacherModel.findOne({ phoneNumber: number, school })
             .select(['school', 'phoneNumber', 'firstname', 'lastname', 'subjects'])
             .lean()
+
         if (!account) throw new NotFoundException(`Account fetch failed: ${account}`)
         await this.cacheManager.set("account", account, 900)
-        return {}
+        return account
     }
 
-    /** retieves attendance list */
+    /** class can be either of items in list - [ss1, ss2, ss3] | [js1, js2, js3] */
     public async fetchAttendance(_class: string) {
-        /* attendance is fetched first when teacher goes on the time-table section.. */
-        /* the second (& continous) requests (UPDATE) is done in continum..  */
-        /* hence, there's no need to cache attandance requests since its regularly updated. */
+        /* don't cache attandance requests since its regularly updated. */
         const attendance = await this.attendance.find({ class: _class }).lean().exec()
         if (!attendance) throw new NotFoundException(`Attendance fetch failed: ${attendance}`)
-        await this.cacheManager.set("attendance", attendance, 200)
-        return { attendance }
+        return attendance
     }
 
-    /** type can be either of the items in list - ['lesson', null]  */
+    /** type can be either of the items in list - ['lesson', 'exam']  */
     public async fetchTimetable(type?: string | unknown) {
-        /* time-table is created one-time hence, tis cacheable. */
+        //! Timetable model is complicated, test if it works.
+        const cachedTimetable = await this.cacheManager.get("timetable")
+        if (cachedTimetable) return cachedTimetable
+
         if (type === "exam") {
-            const timetable = await this.examTable.find({}).lean().exec()
+            const timetable = await this.examTable.find({}).exec()
             if (!timetable) throw new NotFoundException(`Timetable fetch failed: ${timetable}`)
             await this.cacheManager.set("timetable", timetable, 900)
-            return { timetable }
+            return timetable
         }
         const timetable = await this.timetable.find({}).exec();
-        return { timetable }
+        return timetable
     }
 
     public async fetchSubjects(firstname: string, school: string) {
-        /* subjects is an array that's created once and only updated seldomly.. */
-        /* hence, subjects are cachable. */
+        //Todo: place the init-fetch within a cache-interceptor!
+        const cachedValue = await this.cacheManager.get<string>("teachers-subject");
+        if (cachedValue) return JSON.parse(cachedValue)
+
         const teacher = await this.teacherModel.findOne({ firstname, school }).lean().exec()
-        await this.cacheManager.set("teachers-subject", teacher.subjects, 600)
-        return teacher.subjects
+        if (!teacher) throw new NotFoundException(`Subject fetch failed: ${teacher}`)
+        await this.cacheManager.set("teachers-subject", teacher, 900)
+        return teacher
     }
 
     /** level can be either of the items in list - ['junior', 'senior', null]  */
     public async fetchGrades(regNum: string, level: string) {
-        /* grades are not updated on a daily, rather on a weekly or bi-weekly basis.. */
-        /* cache for grades lasts for about 10mins, hence cacheable. */
+        //todo: [future] use an AI plugin to feed students grades(& patterns) and get a predition of likely to fail or pass.
+        //todo: [future++] this can also be made available to students as a graph/chart of progress.
         if (level === 'senior') {
-            const grades = await this.seniorGrade.findOne({ regNum: regNum  }).lean().exec()
+            const grades = await this.seniorGrade.findOne({ regNum: regNum }).lean().exec()
+            if (!grades) throw new NotFoundException(`Grades fetch (senior) failed: ${grades}`)
             await this.cacheManager.set("grades", grades, 900)
-            return { grades }
+            return grades
         }
         else if (level === "junior") {
             const grades = await this.juniorGrade.findOne({ regNum: regNum }).lean().exec()
+            if (!grades) throw new NotFoundException(`Grades fetch (junior) failed: ${grades}`)
             await this.cacheManager.set("grades", grades, 900)
-            return { grades }
+            return grades
         }
         else {
             const grades = await this.juniorGrade.find({}).lean().exec()
+            if (!grades) throw new NotFoundException(`Grades fetch failed: ${grades}`)
             await this.cacheManager.set("grades", grades, 900)
-            return { grades }
+            return grades
         }
     }
 
     /** accepts subject related to note as argument, e.g: fn('english') */
     public async fetchNotes(subject: string) {
-        /* notes are not updated regularly, only at the end of the day.. */
-        /* hence, it can be cached. */
+        //Todo: attach the init-fetch within a cache interceptor.
         if (typeof subject === 'string') {
-            const notes = await this.notes.findOne({ subject }).exec()
+            const cachedNotes = await this.cacheManager.get<string>(`${subject}-notes`)
+            if (cachedNotes) return JSON.parse(cachedNotes)
 
+            const notes = await this.notes.findOne({ subject }).exec()
             if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`)
-            await this.cacheManager.set("notes", notes, 900)
+            await this.cacheManager.set(`${subject}-notes`, notes, 900)
             return { notes }
         }
+        const cachedNotes = await this.cacheManager.get<string>("notes")
+        if (cachedNotes) return JSON.parse(cachedNotes)
+
         const notes = await this.notes.find({}).exec()
         if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`)
         await this.cacheManager.set("notes", notes, 900)
@@ -107,15 +120,19 @@ export class TeachersServices {
 
     /** accepts student's class and subject related to test as arguments, e.g: fn('english', 'ss1') */
     public async fetchTests(subject: string, _class: string) {
-        /* tests are essentially cacheable. */
+        if (typeof subject === "string") {
+            const cachedTests = await this.cacheManager.get<string>(`${subject}-tests`)
+            if (cachedTests) return JSON.parse(cachedTests)
 
-        if (subject === "string") {
             const tests = await this.tests.findOne({ subject, class: _class }).lean().exec()
-
-            if (!tests) throw new NotFoundException(`Test fetch error:  ${tests}`)
-            await this.cacheManager.set("tests", tests, 600)
-            return { tests }
+            if (!tests) throw new NotFoundException(`${subject}-test fetch error:  ${tests}`)
+            await this.cacheManager.set(`${subject}-tests`, tests, 600)
+            return tests
         }
+        //todo: maybe place this in 'tertiairy-entity' services instead.
+        const cachedTests = await this.cacheManager.get<string>("tests")
+        if (cachedTests) return cachedTests
+
         const tests = await this.tests.find({}).exec()
         if (!tests) throw new NotFoundException(`Tests fetch error: ${tests}`)
         await this.cacheManager.set("tests", tests, 600)

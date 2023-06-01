@@ -9,11 +9,10 @@ export class GradeInterceptor implements NestInterceptor {
         const regNumberPattern = /^ss[1-3]-(?:0\d|[1-9]\d{0,2})$/;
         const regNumber = request.params.reg_numb
 
-        if (method == "GET" && !regNumberPattern.test(regNumber)) {
-            console.log(regNumberPattern.test(regNumber));
-            
-            throw new NotFoundException('Invalid reg-number format')
+        if (method == "GET" ) {
+            return next.handle()
         }
-        return next.handle()
+        throw new NotFoundException('Invalid reg-number format')
+        /* check if its sent already and grab it form the cache and resend. */
     }
 }

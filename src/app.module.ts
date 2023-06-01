@@ -1,24 +1,30 @@
+import { GlobalCacheModule } from './entity/primary_entities/_global/global-cache.module';
+import { TeachersModule } from './entity/primary_entities/staff/teachers/teachers.module';
 import { StudentsModule } from './entity/primary_entities/students/students.module';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
 import { OtpModule } from './services/broadcast/otp/otp.module';
 import { TokensModule } from './services/tokens/tokens.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheModule, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { ZodValidationPipe } from 'nestjs-zod';
-import { Module } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
-import { JwtModule } from '@nestjs/jwt';
-import { TeachersModule } from './entity/primary_entities/staff/teachers/teachers.module';
-// import { AUTH_SECRET } from './services/tokens/tokens.secrets';
-// import { TokensLoggerModule } from './services/broadcast/logger/logger.module';
 
 @Module({
   imports: [
     OtpModule,
     TokensModule,
-    StudentsModule,
     TeachersModule,
+    StudentsModule,
+    GlobalCacheModule,
     ConfigModule.forRoot(),
+    CacheModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        store: 'redis',
+        host: configService.get<string>('REDIS_HOST'),
+        port: configService.get<string>('REDIS_PORT')
+      })
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -31,22 +37,7 @@ import { TeachersModule } from './entity/primary_entities/staff/teachers/teacher
         };
       },
     }),
-    // TokensLoggerModule,
-    // JwtModule.registerAsync({
-    //   useFactory: async () => ({
-    //     secret: AUTH_SECRET,
-    //   }),
-    // }),
   ],
   controllers: [AppController],
-  providers: [],
-  exports:  []
-  // providers: [
-  //   // {
-  //   //   /* ensures zod validation at app-level, applies to e'ry ctrlr in app. */
-  //   //   provide: APP_PIPE,
-  //   //   useClass: ZodValidationPipe,
-  //   // },
-  // ],
 })
 export class AppModule { }
