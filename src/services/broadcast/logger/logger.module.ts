@@ -1,5 +1,5 @@
 import { WinstonModule, WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { EmailTransport } from '../broadcast/mailer/mailer.transport';
+import { EmailTransport } from '../mailer/mailer.transport';
 import { TokensLogger } from './logger.entities';
 import { Module } from '@nestjs/common';
 import winston from 'winston';

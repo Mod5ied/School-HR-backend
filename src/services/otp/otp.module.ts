@@ -1,7 +1,6 @@
 import { ConfigModule, ConfigService } from "@nestjs/config"
 import * as redisStore from "cache-manager-redis-store"
 import { CacheModule, Module } from "@nestjs/common";
-import { OtpController } from "./otp.controller";
 import { OtpService } from "./otp.service";
 
 @Module({
@@ -19,7 +18,6 @@ import { OtpService } from "./otp.service";
             })
         })
     ],
-    controllers: [OtpController],
     providers: [OtpService],
     exports: [OtpService]
 })

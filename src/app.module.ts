@@ -2,7 +2,7 @@ import { GlobalCacheModule } from './entity/primary_entities/_global/global-cach
 import { TeachersModule } from './entity/primary_entities/staff/teachers/teachers.module';
 import { StudentsModule } from './entity/primary_entities/students/students.module';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
-import { OtpModule } from './services/broadcast/otp/otp.module';
+import { OtpModule } from './services/otp/otp.module';
 import { TokensModule } from './services/tokens/tokens.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule, Module } from '@nestjs/common';

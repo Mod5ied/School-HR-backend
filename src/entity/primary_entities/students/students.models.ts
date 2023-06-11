@@ -20,7 +20,7 @@ export class Student {
   @Prop({ required: true })
   dob: Date;
 
-  @Prop({ default: 'user' })
+  @Prop({ default: 'student' })
   role: string;
 
   @Prop({ required: true, type: Object })

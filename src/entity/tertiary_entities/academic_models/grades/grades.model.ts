@@ -8,10 +8,7 @@ type Subject = {
     Exams: number;
 }
 
-/* The reason you need to specify the type in the @Prop decorator is that 
-    Mongoose cannot automatically determine the type of the Subject object in your schema. 
-    By explicitly defining the type as Object, you are informing Mongoose that 
-    the Subject type should be treated as a plain object in the schema. */
+//Todo: Find out how to structure each subject to mongoose-supported style of subject:{firstTest:{max: 5}, secondTest:{max:5}}
 
 @Schema()
 export class SeniorGrade {
@@ -90,7 +87,7 @@ export class SeniorGrade {
 
 @Schema()
 export class JuniorGrade {
-    @Prop({ required: true,lowercase: true })
+    @Prop({ required: true, lowercase: true })
     regNum: string
     /* eg: 'js1-05, js2-07' */
 

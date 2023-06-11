@@ -1,6 +1,6 @@
-import { Teachers } from 'src/entity/primary_entities/staff/teachers/teachers.model';
+import { Teacher } from 'src/entity/primary_entities/staff/teachers/teachers.model';
 import { Student } from 'src/entity/primary_entities/students/students.models';
-import { Bursars } from 'src/entity/primary_entities/staff/bursary/busary.model';
+import { Bursary } from 'src/entity/primary_entities/staff/bursary/busary.model';
 
 /** Note: Al type defs for Primary entities and Auth systems
     are defined in this file! */
@@ -32,4 +32,4 @@ export interface IToken {
 }
 
 /* users type def. */
-export type Users = Student | Teachers | Bursars;
+export type Users = Student & Teacher & Bursary

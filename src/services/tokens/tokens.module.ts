@@ -6,7 +6,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TokenService } from './tokens.service';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { TokenCtrlr } from './tokens.controller';
 
 @Module({
   imports: [
@@ -16,7 +15,6 @@ import { TokenCtrlr } from './tokens.controller';
     ]),
     JwtModule.register({}),
   ],
-  controllers: [TokenCtrlr],
   providers: [TokenService, ResponseService, CryptService],
   exports: [TokenService, ResponseService, CryptService],
 })

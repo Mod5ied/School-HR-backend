@@ -7,6 +7,8 @@ export const ACCESS_SECRET =
 export const REFRESH_SECRET =
   'klk5kj6$08dhefu__fhufh1WErr!**vejhveAIjijSIjr3565hhee-ee-r^yuyr?/reeygy%%656maguuiree!!fjkdff490petg&eern269hashxmnj2432jjk53452422@@#%$eyJhbGciOiJIUzI1NiIsInR5';
 
-export const LINK = `http://localhost:8000/api.schoolhr.com/v1/token/`;
+export const ENCRYPT_SECRET = 'encrypt10nS3cr3ti3a3ecr3t_ss!ce=Et**sc_**secret_$se$cr$et'
+
+  export const LINK = `http://localhost:8000/api.schoolhr.com/v1/token/`;
 
 export const SECRET = { email: 'goziepaddy@gmail.com', subject: 'Login Link' };

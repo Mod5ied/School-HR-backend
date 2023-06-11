@@ -1,6 +1,6 @@
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { EmailTransport } from '../broadcast/mailer/mailer.transport';
-import { EmailOptions } from '../broadcast/mailer/mailer.types';
+import { EmailTransport } from '../mailer/mailer.transport';
+import { EmailOptions } from '../mailer/mailer.types';
 import { Injectable, Inject } from '@nestjs/common';
 import { Logger, } from 'winston';
 

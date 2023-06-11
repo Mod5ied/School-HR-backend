@@ -12,7 +12,8 @@ export class GradeInterceptor implements NestInterceptor {
         if (method == "GET" ) {
             return next.handle()
         }
-        throw new NotFoundException('Invalid reg-number format')
+        // throw new NotFoundException('Invalid reg-number format')
+        return next.handle()
         /* check if its sent already and grab it form the cache and resend. */
     }
 }

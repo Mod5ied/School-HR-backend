@@ -13,3 +13,11 @@ export async function comparePasswords(
   if (!isMatch) return { ok: false };
   return { ok: true };
 }
+
+// export function spitEncryptionKey(secret: string) {
+//   return bcrypt.hashSync(secret, 10)
+// }
+
+// export async function compareEncryptKey(localKey: string, requestKey: string) {
+//   return await bcrypt.compare(requestKey, localKey)
+// }
