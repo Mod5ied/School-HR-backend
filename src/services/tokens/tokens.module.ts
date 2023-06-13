@@ -1,6 +1,6 @@
 import { AccessToken, AccessTokensSchema } from './models/accesstokens.model';
 import { RefreshToken, RefreshTokenSchema } from './models/refreshtokens.model';
-import { ResponseService } from '../broadcast/response/reponse.tokens';
+import { ResponseService } from '../broadcast/response/response.tokens';
 import { CryptService } from '../encrypt/tokens.encrypt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TokenService } from './tokens.service';

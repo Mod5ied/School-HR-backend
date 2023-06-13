@@ -2,11 +2,12 @@ import { GlobalCacheModule } from './entity/primary_entities/_global/global-cach
 import { TeachersModule } from './entity/primary_entities/staff/teachers/teachers.module';
 import { StudentsModule } from './entity/primary_entities/students/students.module';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
-import { OtpModule } from './services/otp/otp.module';
+import { NestCacheModule } from "./services/cache/cache.module";
 import { TokensModule } from './services/tokens/tokens.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CacheModule, Module } from '@nestjs/common';
+import { OtpModule } from './services/otp/otp.module';
 import { AppController } from './app.controller';
+import { Module } from '@nestjs/common';
 
 @Module({
   imports: [
@@ -14,17 +15,9 @@ import { AppController } from './app.controller';
     TokensModule,
     TeachersModule,
     StudentsModule,
+    NestCacheModule,
     GlobalCacheModule,
-    ConfigModule.forRoot(),
-    CacheModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        store: 'redis',
-        host: configService.get<string>('REDIS_HOST'),
-        port: configService.get<string>('REDIS_PORT')
-      })
-    }),
+    ConfigModule.forRoot({ cache: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

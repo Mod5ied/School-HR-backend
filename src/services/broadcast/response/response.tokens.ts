@@ -19,14 +19,13 @@ export class ResponseService {
 
     /** validates tokens schema with validator (e.g: joi).  */
     private validateResponse(response: any) {
-        const { error, value } = TokenSchema.validate(response, { abortEarly: false })
-
-        if (error) throw new BadRequestException(error.message)
-        return value
+        const result = TokenSchema.validate(response)
+        if (result.value) return result.value
+        else throw new BadRequestException(result.error)
     }
 
     /** sends validated response to client. */
-    public async respondToClient(token: string, { role, permissions }) {
+    public async respondToClient(token: string | string[], { role, permissions }) {
         const res = { permissions, role, token, verified: true };
         return this.validateResponse(res);
     }

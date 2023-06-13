@@ -1,34 +1,16 @@
-import {
-    Injectable,
-    Inject,
-    CACHE_MANAGER,
-    NotFoundException,
-    UnauthorizedException,
-    BadRequestException,
-} from '@nestjs/common';
-import {
-    CreateNoteDto,
-    CreateSubjectsDto,
-    CreateTeacherDto,
-    CreateTestDto,
-} from 'src/validation/dtos/teachers.dto';
-import {
-    TimeTable,
-    ExamTimetable,
-} from 'src/entity/tertiary_entities/academic_models/timetable/timetable.model';
-import {
-    JuniorGrade,
-    SeniorGrade,
-} from 'src/entity/tertiary_entities/academic_models/grades/grades.model';
+import { CreateNoteDto, CreateSubjectsDto, CreateTeacherDto, CreateTestDto } from 'src/validation/dtos/teachers.dto';
+import { TimeTable, ExamTimetable } from 'src/entity/tertiary_entities/academic_models/timetable/timetable.model';
+import { JuniorGrade, SeniorGrade } from 'src/entity/tertiary_entities/academic_models/grades/grades.model';
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { Attendance } from 'src/entity/tertiary_entities/academic_models/attendance/attendance.model';
 import { Tests } from 'src/entity/tertiary_entities/academic_models/tests/tests.model';
 import { Notes } from 'src/entity/tertiary_entities/academic_models/notes/notes.model';
+import mongoose, { Document, LeanDocument, Model } from 'mongoose';
 import { TokenService } from 'src/services/tokens/tokens.service';
+import { CacheService } from 'src/services/cache/cache.service';
 import { OtpService } from 'src/services/otp/otp.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Teacher } from './teachers.model';
-import { Cache } from 'cache-manager';
-import { Model } from 'mongoose';
 
 @Injectable()
 export class TeachersServices {
@@ -45,156 +27,175 @@ export class TeachersServices {
         @InjectModel(Teacher.name) private readonly teacherModel: Model<Teacher>,
         @InjectModel(Tests.name) private readonly tests: Model<Tests>,
         @InjectModel(Notes.name) private readonly notes: Model<Notes>,
-        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+        private readonly cacheService: CacheService,
         private readonly tokenService: TokenService,
         private readonly otpService: OtpService,
     ) { }
 
-    private async fetchCachedData(key: string) {
-        const data = await this.cacheManager.get<string>(key)
-        if (data) return JSON.parse(data)
-    }
-
-    private async saveToCache(key: string, data: any, ttl: number) {
-        await this.cacheManager.set(key, JSON.stringify(data), ttl)
-    }
-
     /** class can be either of items in list - [ss1, ss2, ss3] | [js1, js2, js3] */
     public async fetchAttendance(_class: string) {
         /* don't cache attendance requests since its regularly updated. */
-        const attendance = await this.attendance
-            .find({ class: _class })
-            .lean()
-            .exec();
-        if (!attendance)
-            throw new NotFoundException(`Attendance fetch failed: ${attendance}`);
+        const attendance = await this.attendance.find({ class: _class }).lean().exec();
+        if (!attendance) throw new NotFoundException(`Attendance fetch failed: ${attendance}`);
         return attendance;
     }
 
     /** type can be either of the items in list - ['lesson', 'exam']  */
-    public async fetchTimetable(type?: string | unknown) {
+    public async fetchTimetable(type?: string) {
+        //Todo: attach the init-fetch within a cache interceptor. (may be hard @ fetchGrades).
         //! Timetable model is complicated, test if it works.
-        const cachedTimetable = await this.cacheManager.get('timetable');
-        if (cachedTimetable) return cachedTimetable;
+        let cacheKey: string;
+        let timeTable: any;
 
         if (type === 'exam') {
-            const timetable = await this.examTable.find({}).exec();
-            if (!timetable)
-                throw new NotFoundException(`Timetable fetch failed: ${timetable}`);
-            await this.cacheManager.set('timetable', timetable, 900);
-            return timetable;
+            cacheKey = 'exam-table';
+            const cachedTimetable = await this.cacheService.getCached(cacheKey);
+            if (cachedTimetable) return cachedTimetable;
+
+            timeTable = await this.examTable.find().exec();
+            if (!timeTable) throw new NotFoundException(`Exam table fetch failed: ${timeTable}`);
         }
-        const timetable = await this.timetable.find({}).exec();
-        return timetable;
+        else if (type === 'lesson') {
+            cacheKey = 'time-table';
+            const cachedTimetable = await this.cacheService.getCached(cacheKey);
+            if (cachedTimetable) return cachedTimetable.data;
+
+            timeTable = await this.timetable.find({}).exec();
+            if (!timeTable) throw new NotFoundException(`Lesson table fetch failed: ${timeTable}`);
+        }
+        else throw new BadRequestException(`Invalid timetable type: ${type}`);
+
+        try {
+            await this.cacheService.setCache('exam-table', timeTable, 900);
+        } catch (error) {
+            //log the error and retry-count in details. then try to cache again.
+            /* find out what may cause failure and code an auto resolve before retry! */
+            await this.cacheService.setCache('exam-table', timeTable, 900);
+        }
     }
 
     public async fetchSubjects(firstName: string, school: string) {
-        //Todo: place the init-fetch within a cache-interceptor!
-        const cachedValue = await this.cacheManager.get<string>('teachers-subject');
-        if (cachedValue) return JSON.parse(cachedValue);
+        const cachedValue = await this.cacheService.getCached('teachers-subject');
+        if (cachedValue) return cachedValue;
 
-        const teacher = await this.teacherModel
-            .findOne({ firstName, school })
-            .lean()
-            .exec();
-        if (!teacher)
-            throw new NotFoundException(`Subject fetch failed: ${teacher}`);
-        await this.cacheManager.set('teachers-subject', teacher, 900);
+        const teacher = await this.teacherModel.findOne({ firstName, school }).lean().exec();
+        if (!teacher) throw new NotFoundException(`Subject fetch failed: ${teacher}`);
+        await this.cacheService.setCache('teachers-subject', teacher, 900);
         return teacher;
     }
 
     /** level can be either of the items in list - ['junior', 'senior', null]  */
-    public async fetchGrades(regNum: string, level: string) {
+    public async fetchGrades(level: string, regNum?: string) {
         //todo: [future] use an AI plugin to feed students grades(& patterns) and get a predition of likely to fail or pass.
         //todo: [future++] this can also be made available to students as a graph/chart of progress.
+        let cacheKey: string;
+        let grades: LeanDocument<SeniorGrade | JuniorGrade & { _id: mongoose.Types.ObjectId }> |
+            LeanDocument<JuniorGrade & { _id: mongoose.Types.ObjectId }>[];
+
         if (level === 'senior') {
-            const grades = await this.seniorGrade
-                .findOne({ regNum: regNum })
-                .lean()
-                .exec();
-            if (!grades)
-                throw new NotFoundException(`Grades fetch (senior) failed: ${grades}`);
-            await this.cacheManager.set('grades', grades, 900);
-            return grades;
-        } else if (level === 'junior') {
-            const grades = await this.juniorGrade
-                .findOne({ regNum: regNum })
-                .lean()
-                .exec();
-            if (!grades)
-                throw new NotFoundException(`Grades fetch (junior) failed: ${grades}`);
-            await this.cacheManager.set('grades', grades, 900);
-            return grades;
-        } else {
-            const grades = await this.juniorGrade.find({}).lean().exec();
-            if (!grades)
-                throw new NotFoundException(`Grades fetch failed: ${grades}`);
-            await this.cacheManager.set('grades', grades, 900);
-            return grades;
+            cacheKey = 'senior-grades';
+            const cachedGrade = await this.cacheService.getCached(cacheKey);
+            if (cachedGrade) return cachedGrade;
+
+            grades = await this.seniorGrade.findOne({ regNum: regNum }).lean().exec();
+            if (!grades) throw new NotFoundException(`Grades fetch (senior) failed: ${grades}`);
+        }
+        else if (level === 'junior') {
+            cacheKey = 'junior-grades';
+            const cachedGrade = await this.cacheService.getCached(cacheKey);
+            if (cachedGrade) return cachedGrade;
+
+            grades = await this.juniorGrade.findOne({ regNum: regNum }).lean().exec();
+            if (!grades) throw new NotFoundException(`Grades fetch (junior) failed: ${grades}`);
+        }
+        else {
+            cacheKey = 'pupils-grades';
+            const cachedGrade = await this.cacheService.getCached(cacheKey);
+            if (cachedGrade) return cachedGrade;
+
+            grades = await this.juniorGrade.find({}).lean().exec();
+            if (!grades) throw new NotFoundException(`Grades fetch failed: ${grades}`);
+        }
+        try {
+            await this.cacheService.setCache(cacheKey, grades, 900)
+        } catch (error) {
+            console.log('grades-error', grades);
+            //log the error and retry-count in details. then try to cache again.
+            await this.cacheService.setCache(cacheKey, grades, 900)
         }
     }
 
     /** accepts subject related to note as argument, e.g: fn('english') */
     public async fetchNotes(subject: string) {
-        //Todo: attach the init-fetch within a cache interceptor.
+        let notes: (Document<unknown, any, Notes> & Notes & { _id: mongoose.Types.ObjectId })[]
+            | Document<unknown, any, Notes> & Notes & { _id: mongoose.Types.ObjectId; }
+
         if (typeof subject === 'string') {
-            const cachedNotes = await this.cacheManager.get<string>(
-                `${subject}-notes`,
-            );
-            if (cachedNotes) return JSON.parse(cachedNotes);
+            const cachedNotes = await this.cacheService.getCached(`${subject}-notes`);
+            if (cachedNotes) return cachedNotes;
 
-            const notes = await this.notes.findOne({ subject }).exec();
+            notes = await this.notes.findOne({ subject }).exec();
             if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`);
-            await this.cacheManager.set(`${subject}-notes`, notes, 900);
-            return { notes };
         }
-        const cachedNotes = await this.cacheManager.get<string>('notes');
-        if (cachedNotes) return JSON.parse(cachedNotes);
+        else {
+            const cachedNotes = await this.cacheService.getCached(`${subject}-notes`);
+            if (cachedNotes) return cachedNotes;
 
-        const notes = await this.notes.find({}).exec();
-        if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`);
-        await this.cacheManager.set('notes', notes, 900);
-        return { notes };
+            notes = await this.notes.find({}).exec();
+            if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`);
+        }
+        try {
+            await this.cacheService.setCache(`${subject}-note`, notes, 900)
+        } catch (error) {
+            console.log('notes-error', error);
+            await this.cacheService.setCache(`${subject}-note`, notes, 900)
+        }
     }
 
     /** accepts student's class and subject related to test as arguments, e.g: fn('english', 'ss1') */
     public async fetchTests(subject: string, _class: string) {
+        let tests: LeanDocument<Tests & { _id: mongoose.Types.ObjectId }> |
+            (Document<unknown, any, Tests> & Tests & { _id: mongoose.Types.ObjectId })[]
+
         if (typeof subject === 'string') {
-            const cachedTests = await this.cacheManager.get<string>(
-                `${subject}-tests`,
-            );
-            if (cachedTests) return JSON.parse(cachedTests);
+            const cachedTests = await this.cacheService.getCached(`${subject}-tests`);
+            if (cachedTests) return cachedTests;
 
-            const tests = await this.tests
-                .findOne({ subject, class: _class })
-                .lean()
-                .exec();
-            if (!tests)
-                throw new NotFoundException(`${subject}-test fetch error:  ${tests}`);
-            await this.cacheManager.set(`${subject}-tests`, tests, 600);
-            return tests;
+            tests = await this.tests.findOne({ subject, class: _class }).lean().exec();
+            if (!tests) throw new NotFoundException(`${subject}-test fetch error:  ${tests}`);
+            try {
+                await this.cacheService.setCache(`${subject}-tests`, tests, 600);
+            } catch (error) {
+                await this.cacheService.setCache(`${subject}-tests`, tests, 600);
+            }
         }
-        //todo: maybe place this in 'tertiairy-entity' services instead.
-        const cachedTests = await this.cacheManager.get<string>('tests');
-        if (cachedTests) return cachedTests;
+        else {
+            const cachedTests = await this.cacheService.getCached('tests');
+            if (cachedTests) return cachedTests;
 
-        const tests = await this.tests.find({}).exec();
-        if (!tests) throw new NotFoundException(`Tests fetch error: ${tests}`);
-        await this.cacheManager.set('tests', tests, 600);
+            tests = await this.tests.find({}).exec();
+            if (!tests) throw new NotFoundException(`Tests fetch error: ${tests}`);
+            try {
+                await this.cacheService.setCache(`tests`, tests, 900);
+            } catch (error) {
+                await this.cacheService.setCache(`tests`, tests, 900);
+            }
+        }
     }
 
     /* POST operations */
-    //Todo: [v1.1], use another thread to handle uploading posts.
+    //Todo: [v1.1] use another thread to handle uploading posts.
     //Todo: place the init-fetch within a cache-interceptor!
 
     public async loginViaEmail(number: string, school: string) {
-        await this.fetchCachedData('email-account')
+        const cachedData = await this.cacheService.getCached('email-account');
+        if (cachedData) return cachedData;
+
         const account = await this.teacherModel
             .findOne({ phoneNumber: number, school })
             .select(['firstName', 'lastName', 'email', 'role', 'subjects', 'notes', 'permissions'])
             .populate('notes');
-        if (!account)
-            throw new NotFoundException(`Account fetch failed: ${account}`);
+        if (!account) throw new NotFoundException(`Account fetch failed: ${account}`);
 
         return await this.tokenService.generateTokens(account);
     }
@@ -207,46 +208,61 @@ export class TeachersServices {
     }
 
     public async loginViaOTP(number: string, school: string) {
-        await this.fetchCachedData('otp-account')
+        const cachedData = await this.cacheService.getCached('otp-account');
+        if (cachedData) return cachedData;
+
         const account = await this.teacherModel
             .findOne({ phoneNumber: number, school })
             .select(['firstName', 'lastName', 'phoneNumber', 'role', 'subjects', 'notes', 'permissions'])
             .populate('notes');
-        if (!account)
-            throw new NotFoundException(`Account fetch failed: ${account}`);
+        if (!account) throw new NotFoundException(`Account fetch failed: ${account}`);
 
         return await this.otpService.generateOtp(account);
     }
 
     public async createAnAccount(teacher: CreateTeacherDto) {
-        const existing_teacher = await this.fetchCachedData('new-teacher')
-        if (existing_teacher) return new BadRequestException("Account already exists!")
+        // await this.teacherModel.deleteMany({})
+        //Todo: [v1.1] use UUID as primary key for each teacher document.
+        const existing_teacher = await this.cacheService.getCached('new-teacher');
+        if (existing_teacher) return new BadRequestException("Account already exists!");
 
         const teacherPojo = new this.teacherModel({ ...teacher });
-        const savedTeacher = await teacherPojo.save()
+        const savedTeacher = await teacherPojo.save();
         if (!savedTeacher) throw new BadRequestException(`Account creation failed: ${savedTeacher}`);
-        await this.saveToCache('new-teacher', savedTeacher, 900)
 
-        return { data: savedTeacher }
+        try {
+            await this.cacheService.setCache('new-teacher', savedTeacher, 900);
+            return { data: savedTeacher };
+        } catch (error) {
+            console.log('create-account error', error);
+            await this.cacheService.setCache('new-teacher', savedTeacher, 900);
+            /* log a creation error, and possible cause. */
+        }
     }
 
-    // public async verifyEmailLogin() { }
+    public async verifyEmailLogin(token: string, email: string) {
+        return await this.tokenService.verifyAccessToken(token, email);
+        /* grab the notification status and "manage" it. */
+    }
 
-    // public async verifyOtpLogin() { }
+    public async verifyOtpLogin(otp: number, number: string) {
+        const account = await this.teacherModel.findOne({ phoneNumber: number })
+            .select(['phoneNumber', 'role', 'permissions']);
+        return await this.otpService.verifyOtp(otp, account);
+    }
 
     public async uploadToSubjects(subjects: CreateSubjectsDto) {
         const { body, encryptionKey, teacherId } = subjects;
         const result = await this.tokenService.verifyEncryptedKeys(encryptionKey);
         if (!result) throw new UnauthorizedException('Encryption key is invalid!');
 
-        const teacher = await this.teacherModel
-            .findOne({ phoneNumber: teacherId })
+        const teacher = await this.teacherModel.findOne({ phoneNumber: teacherId })
             .select(['firstName', 'lastName', 'phoneNumber', 'subjects'])
             .exec();
         if (!teacher) throw new NotFoundException("Teacher's account not found!");
+        
         teacher && teacher.subjects.push(...body);
         const savedTeacher = (await teacher.save()).subjects;
-
         return { data: savedTeacher };
     }
 
@@ -255,8 +271,7 @@ export class TeachersServices {
         const result = await this.tokenService.verifyEncryptedKeys(encryptionKey);
         if (!result) throw new UnauthorizedException('Encryption key is invalid!');
 
-        const teacher = await this.teacherModel
-            .findOne({ phoneNumber: body.teacherId })
+        const teacher = await this.teacherModel.findOne({ phoneNumber: body.teacherId })
             .select(['firstName', 'lastName', 'phoneNumber', 'notes'])
             .exec();
         if (!teacher) throw new NotFoundException("Teacher's account not found!");
@@ -272,8 +287,7 @@ export class TeachersServices {
         const result = await this.tokenService.verifyEncryptedKeys(encryptionKey);
         if (!result) throw new UnauthorizedException('Encryption key is invalid!');
 
-        const teacher = await this.teacherModel
-            .findOne({ phoneNumber: body.teacherId })
+        const teacher = await this.teacherModel.findOne({ phoneNumber: body.teacherId })
             .select(['firstName', 'lastName', 'phoneNumber']);
         if (!teacher) throw new NotFoundException("Teacher's account not found!");
         const test = new this.tests({ ...body });
@@ -282,7 +296,7 @@ export class TeachersServices {
         return { body: populated };
     }
 
-    /* update srevices */
+    /* update services */
     // public async runUpdateAttendance() { }
 
     //public async runUpdateSubjects() { }

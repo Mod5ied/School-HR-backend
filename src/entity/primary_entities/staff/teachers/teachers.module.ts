@@ -27,7 +27,7 @@ import { Module } from "@nestjs/common";
         ]),
     ],
     controllers: [TeachersControllers],
-    providers: [TeachersServices], // Use the existing CACHE_MANAGER],
+    providers: [TeachersServices],
     exports: [TeachersServices]
 })
 export class TeachersModule { }

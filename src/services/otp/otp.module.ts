@@ -1,24 +1,11 @@
-import { ConfigModule, ConfigService } from "@nestjs/config"
-import * as redisStore from "cache-manager-redis-store"
-import { CacheModule, Module } from "@nestjs/common";
+import { ResponseService } from "../broadcast/response/response.tokens";
+import { TokensModule } from "../tokens/tokens.module";
 import { OtpService } from "./otp.service";
+import { Module } from "@nestjs/common";
 
 @Module({
-    imports: [
-        ConfigModule.forRoot({ cache: true }),
-        CacheModule.registerAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-                store: redisStore,
-                // Store-specific configuration:
-                host: configService.get('REDIS_HOST'),
-                port: configService.get('REDIS_PORT'),
-                ttl: 120 /* 2-mins */
-            })
-        })
-    ],
-    providers: [OtpService],
+    imports: [TokensModule],
+    providers: [OtpService, ResponseService],
     exports: [OtpService]
 })
 export class OtpModule { }

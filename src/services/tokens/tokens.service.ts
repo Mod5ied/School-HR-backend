@@ -1,33 +1,31 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { Injectable, Inject, BadRequestException, UnauthorizedException, CACHE_MANAGER } from '@nestjs/common'
+import { Injectable, Inject, BadRequestException, UnauthorizedException } from '@nestjs/common'
 import { ACCESS_SECRET, ENCRYPT_SECRET, LINK, REFRESH_SECRET, SECRET } from './tokens.secrets'
-import { ResponseService } from '../broadcast/response/reponse.tokens'
+import { ResponseService } from '../broadcast/response/response.tokens'
 import { RefreshToken } from './models/refreshtokens.model'
 import { AccessToken } from './models/accesstokens.model'
 import { CryptService } from '../encrypt/tokens.encrypt'
+import { CacheService } from '../cache/cache.service'
 import { IToken, Users } from './tokens.types'
 import { InjectModel } from '@nestjs/mongoose'
 import { JwtService } from '@nestjs/jwt/dist'
-import { Cache } from "cache-manager"
-import { LeanDocument, Model, ObjectId } from 'mongoose'
+import { Model } from 'mongoose'
 
 @Injectable()
 export class TokenService {
   constructor(
     private readonly responseService: ResponseService,
+    private readonly cacheService: CacheService,
     private readonly cryptService: CryptService,
     private readonly jwtService: JwtService,
     @InjectModel(AccessToken.name) private readonly accessToken: Model<IToken>,
     @InjectModel(RefreshToken.name) private readonly refreshToken: Model<IToken>,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) { }
-
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private buildVerificationLink(email: string, hashedToken: string): string {
     return `\${LINK}verify?token=\${hashedToken}&email=\${email}`;
   }
-
 
   private buildEmailContent(vLink: string): string {
     return `
@@ -94,13 +92,13 @@ export class TokenService {
     const vLink = this.buildVerificationLink(user.email, hashedAccessToken)
     const emailContent = this.buildEmailContent(vLink)
 
-    // return { hashedAccessToken, emailContent }
-    return this.responseService.respondViaEmail({
-      to: user.email,
-      from: SECRET.email,
-      subject: SECRET.subject,
-      html: emailContent
-    })
+    return { hashedAccessToken, emailContent }
+    // return this.responseService.respondViaEmail({
+    //   to: user.email,
+    //   from: SECRET.email,
+    //   subject: SECRET.subject,
+    //   html: emailContent
+    // })
   }
 
   /** method is called when client prematurely logs out of system.  */
@@ -115,32 +113,37 @@ export class TokenService {
   /** verifies access-tokens and responds to client.  */
   public async verifyAccessToken(token: string, email: string) {
     const validToken = await this.cryptService.decryptTokens(token, email)
-    if (validToken.match)
-      return this.responseService.respondToClient(token, {
-        role: validToken.doc.role, permissions: validToken.doc.tokenPermissions
-      })
+    if (!validToken.match) throw new UnauthorizedException('Token verification failed - Invalid token')
 
-    throw new UnauthorizedException('Token verification failed - Invalid token')
+    return this.responseService.respondToClient(token, {
+      role: validToken.doc.role, permissions: validToken.doc.tokenPermissions
+    })
   }
 
   /** generates an encryption key and caches it. */
   public async generateEncryptedKeys(user: Partial<Users>) {
-    const key = await this.cacheManager.get<string>('encryptedKey')
+    const key = await this.cacheService.getCached('encryptedKey')
     if (key) return key
 
     const encryptedKey = this.jwtService.sign({ role: user.role, permission: user.permissions },
       { secret: ENCRYPT_SECRET })
-    encryptedKey && await this.cacheManager.set('encryptedKey', encryptedKey)
+    //todo: to set cache to a max life of 8 hours.
+    encryptedKey && await this.cacheService.setCache('encryptedKey', encryptedKey)
     return encryptedKey
   }
 
   /** verifies encryption keys and clears it from cache. */
   public async verifyEncryptedKeys(requestKey: string) {
     const result = await this.jwtService.verifyAsync(requestKey, { secret: ENCRYPT_SECRET })
-    console.log(result);
+    console.log("verify-encrypted-key result: ", result);
     if (!result) return null
 
-    await this.cacheManager.del('encryptedKey')
-    return result
+    try {
+      await this.cacheService.delCached('encryptedKey');
+      return result;
+    } catch (error) {
+      /* log the error in details, then proceed to cache again. */
+      await this.cacheService.delCached('encryptedKey');
+    }
   }
 }

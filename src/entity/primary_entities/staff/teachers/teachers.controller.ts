@@ -21,7 +21,6 @@ import {
     UseInterceptors,
 } from '@nestjs/common';
 import { NumberInterceptor } from '../_interceptors/phone_number.intercept';
-// import { UploadInterceptor } from "../_interceptors/upload.intercept";
 import { GradeInterceptor } from '../_interceptors/grades.intercept';
 import { TeachersServices } from './teachers.services';
 import { JoiPipe } from 'src/validation/validation.pipe';
@@ -38,7 +37,7 @@ export class TeachersControllers {
     }
 
     @Get('timetable/:lesson')
-    async returnTimetable(@Param('lesson') lesson: string | unknown) {
+    async returnTimetable(@Param('lesson') lesson: string) {
         return this.teachersServices.fetchTimetable(lesson);
     }
 
@@ -49,12 +48,10 @@ export class TeachersControllers {
     }
 
     /* reg-no must exist from (01-09) & (10-999), level can be either (senior|junior|pupil)*/
-    @Get(
-        'grades/:reg_numb(ss[1-3]-(?:0\\d|[1-9]\\d{0,2}))/(:level(senior|junior|pupil))',
-    )
+    @Get('grades/:reg_numb(ss[1-3]-(?:0\\d|[1-9]\\d{0,2}))/(:level(senior|junior|pupil))')
     async returnGrades(@Param() params: { reg_numb: string; level: string }) {
         const { level, reg_numb } = params;
-        return this.teachersServices.fetchGrades(reg_numb, level);
+        return this.teachersServices.fetchGrades(level, reg_numb);
     }
 
     @Get('notes/:subject')
@@ -86,11 +83,23 @@ export class TeachersControllers {
         return await this.teachersServices.loginViaOTP(number, school);
     }
 
-    // place in delete ops.
+    //todo: place in delete ops.
     @Post('account/logout/:number/:school')
     async accountLogout(@Param() params: { number: string; school: string }) {
         const { number, school } = params;
         return await this.teachersServices.logoutAccount(number, school)
+    }
+
+    @Post('token/verify/:token/:email')
+    async tokenVerifyAccount(@Param() params: { token: string, email: string }) {
+        const { email, token } = params;
+        return await this.teachersServices.verifyEmailLogin(token, email)
+    }
+
+    @Post('otp/verify/:otp/:number')
+    async otpVerifyAccount(@Param() params: { otp: number, number: string }) {
+        const { number, otp } = params;
+        return await this.teachersServices.verifyOtpLogin(otp, number)
     }
 
     @Post('subjects/new')
