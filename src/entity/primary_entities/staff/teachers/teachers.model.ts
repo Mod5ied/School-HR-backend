@@ -1,6 +1,6 @@
 import { Notes } from 'src/entity/tertiary_entities/academic_models/notes/notes.model';
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
-import { Permissions, PermissionsSchema } from "./teachers.interface"
+import { Permissions } from "./teachers.interface"
 import * as mongoose from 'mongoose';
 
 export interface Teachers {

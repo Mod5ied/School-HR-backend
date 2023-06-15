@@ -89,6 +89,9 @@ export class TokenService {
       await this.generateAccessToken(user),
       await this.generateRefreshToken(user)
     ])
+
+    //todo: find out the default "ttl" for redis. Set the ttl here to 8-hours.
+    await this.cacheService.setCache('access-token', hashedAccessToken)
     const vLink = this.buildVerificationLink(user.email, hashedAccessToken)
     const emailContent = this.buildEmailContent(vLink)
 
@@ -113,14 +116,16 @@ export class TokenService {
   /** verifies access-tokens and responds to client.  */
   public async verifyAccessToken(token: string, email: string) {
     const validToken = await this.cryptService.decryptTokens(token, email)
-    if (!validToken.match) throw new UnauthorizedException('Token verification failed - Invalid token')
+    // if (!validToken.match) throw new UnauthorizedException('Token verification failed - Invalid token')
+    if (!validToken.match) return null
+    /* throw the error from the interceptor. */
 
     return this.responseService.respondToClient(token, {
       role: validToken.doc.role, permissions: validToken.doc.tokenPermissions
     })
   }
 
-  /** generates an encryption key and caches it. */
+  /** generates an encryption key and caches it. Called at log-in. */
   public async generateEncryptedKeys(user: Partial<Users>) {
     const key = await this.cacheService.getCached('encryptedKey')
     if (key) return key
@@ -132,7 +137,7 @@ export class TokenService {
     return encryptedKey
   }
 
-  /** verifies encryption keys and clears it from cache. */
+  /** verifies encryption keys and clears it from cache. Called by POST & UPDATE ops. */
   public async verifyEncryptedKeys(requestKey: string) {
     const result = await this.jwtService.verifyAsync(requestKey, { secret: ENCRYPT_SECRET })
     console.log("verify-encrypted-key result: ", result);
@@ -140,7 +145,7 @@ export class TokenService {
 
     try {
       await this.cacheService.delCached('encryptedKey');
-      return result;
+      return true;
     } catch (error) {
       /* log the error in details, then proceed to cache again. */
       await this.cacheService.delCached('encryptedKey');

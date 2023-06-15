@@ -22,23 +22,11 @@ export class CreateSubjectsDto {
     public encryptionKey: string
 }
 
-interface Note {
-    data: any
-    class: string
-    subject: string
-    teacherId: string
-    dateUploaded: string
-}
 interface Test {
     date: Date
     class: string
     subject: string
     teacherId: string
-}
-
-export class CreateNoteDto {
-    public body: Note
-    public encryptionKey: string
 }
 
 export class CreateTestDto {

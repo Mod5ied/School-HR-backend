@@ -13,6 +13,7 @@ export class CacheService {
             return await this.cacheManager.set(key, JSON.stringify(value), { ttl })
         } catch (error) {
             console.log('Error setting cache: ', error)
+            /* Log the error! Then try setting cache again. */
         }
     }
 
@@ -23,6 +24,7 @@ export class CacheService {
             //proceed to the next line on the caller.
         } catch (error) {
             console.log('Error getting cached: ', error)
+            /* Log the error! Then try setting cache again. */
         }
     }
 

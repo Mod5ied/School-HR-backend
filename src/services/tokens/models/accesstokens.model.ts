@@ -8,12 +8,18 @@ const validateEmail = (value: string) => {
 
 @Schema()
 export class AccessToken {
-  @Prop({ required: true, get: () => null })
+  @Prop({ required: true, unique: true })
+  phoneNumber: string
+
+  // @Prop({ required: true, get: () => null })
+  // token: string;
+  @Prop({ required: true })
   token: string;
 
   /* only checks if it has "@" and is more than 30 chars. */
   // @Prop({ lowercase: true, match: /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/, maxlength: 30 })
   @Prop({
+    unique: true,
     lowercase: true,
     maxlength: 30,
     minlength: 4,
@@ -31,7 +37,7 @@ export class AccessToken {
   /* then the verifier ensures that only access-tokens with read & write permissions
          set to true can make lasting edits to any records or accounts.
          */
-  @Prop({ required: true, immutable: true , type: Object})
+  @Prop({ required: true, immutable: true, type: Object })
   tokenPermissions: {
     read: boolean;
     write: boolean;
@@ -40,8 +46,8 @@ export class AccessToken {
   @Prop({ lowercase: true })
   role: string;
 
-  // Adds a new field `expiresAt` with a default value set to 4 hours from the creation time
-  @Prop({ default: () => Date.now() + 4 * 60 * 60 * 1000, expires: 4 * 60 * 60 })
+  // Adds a new field `expiresAt` with a default value set to 10 hours from the creation time
+  @Prop({ default: () => Date.now() + 10 * 60 * 60 * 1000, expires: 10 * 60 * 60 })
   expiresAt: Date;
 }
 

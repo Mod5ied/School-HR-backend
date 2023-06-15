@@ -1,16 +1,4 @@
 import {
-    CreateNoteDto,
-    CreateSubjectsDto,
-    CreateTeacherDto,
-    CreateTestDto,
-} from 'src/validation/dtos/teachers.dto';
-import {
-    NotesSchema,
-    TestsSchema,
-    TeachersSchema,
-    SubjectSchema,
-} from 'src/validation/schemas/teachers.schema';
-import {
     Controller,
     Get,
     Post,
@@ -20,10 +8,12 @@ import {
     Body,
     UseInterceptors,
 } from '@nestjs/common';
+import { CreateSubjectsDto, CreateTeacherDto, CreateTestDto } from 'src/validation/dtos/teachers.dto';
+import { TestsSchema, TeachersSchema, SubjectSchema } from 'src/validation/schemas/teachers.schema';
 import { NumberInterceptor } from '../_interceptors/phone_number.intercept';
 import { GradeInterceptor } from '../_interceptors/grades.intercept';
-import { TeachersServices } from './teachers.services';
 import { JoiPipe } from 'src/validation/validation.pipe';
+import { TeachersServices } from './teachers.services';
 
 @Controller('teachers')
 @UseInterceptors(NumberInterceptor, GradeInterceptor)
@@ -52,11 +42,6 @@ export class TeachersControllers {
     async returnGrades(@Param() params: { reg_numb: string; level: string }) {
         const { level, reg_numb } = params;
         return this.teachersServices.fetchGrades(level, reg_numb);
-    }
-
-    @Get('notes/:subject')
-    async returnNotes(@Param('subject') subject: string) {
-        return this.teachersServices.fetchNotes(subject);
     }
 
     @Get('tests/:subject/:class')
@@ -105,11 +90,6 @@ export class TeachersControllers {
     @Post('subjects/new')
     async postToSubjects(@Body(new JoiPipe(SubjectSchema)) subjects: CreateSubjectsDto) {
         return await this.teachersServices.uploadToSubjects(subjects);
-    }
-
-    @Post('notes/new')
-    async postToNotes(@Body(new JoiPipe(NotesSchema)) notes: CreateNoteDto) {
-        return await this.teachersServices.uploadToNotes(notes);
     }
 
     @Post('tests/new')

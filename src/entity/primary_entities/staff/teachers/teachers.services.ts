@@ -1,7 +1,7 @@
-import { CreateNoteDto, CreateSubjectsDto, CreateTeacherDto, CreateTestDto } from 'src/validation/dtos/teachers.dto';
 import { TimeTable, ExamTimetable } from 'src/entity/tertiary_entities/academic_models/timetable/timetable.model';
 import { JuniorGrade, SeniorGrade } from 'src/entity/tertiary_entities/academic_models/grades/grades.model';
 import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { CreateSubjectsDto, CreateTeacherDto, CreateTestDto } from 'src/validation/dtos/teachers.dto';
 import { Attendance } from 'src/entity/tertiary_entities/academic_models/attendance/attendance.model';
 import { Tests } from 'src/entity/tertiary_entities/academic_models/tests/tests.model';
 import { Notes } from 'src/entity/tertiary_entities/academic_models/notes/notes.model';
@@ -125,33 +125,6 @@ export class TeachersServices {
         }
     }
 
-    /** accepts subject related to note as argument, e.g: fn('english') */
-    public async fetchNotes(subject: string) {
-        let notes: (Document<unknown, any, Notes> & Notes & { _id: mongoose.Types.ObjectId })[]
-            | Document<unknown, any, Notes> & Notes & { _id: mongoose.Types.ObjectId; }
-
-        if (typeof subject === 'string') {
-            const cachedNotes = await this.cacheService.getCached(`${subject}-notes`);
-            if (cachedNotes) return cachedNotes;
-
-            notes = await this.notes.findOne({ subject }).exec();
-            if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`);
-        }
-        else {
-            const cachedNotes = await this.cacheService.getCached(`${subject}-notes`);
-            if (cachedNotes) return cachedNotes;
-
-            notes = await this.notes.find({}).exec();
-            if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`);
-        }
-        try {
-            await this.cacheService.setCache(`${subject}-note`, notes, 900)
-        } catch (error) {
-            console.log('notes-error', error);
-            await this.cacheService.setCache(`${subject}-note`, notes, 900)
-        }
-    }
-
     /** accepts student's class and subject related to test as arguments, e.g: fn('english', 'ss1') */
     public async fetchTests(subject: string, _class: string) {
         let tests: LeanDocument<Tests & { _id: mongoose.Types.ObjectId }> |
@@ -241,6 +214,7 @@ export class TeachersServices {
     }
 
     public async verifyEmailLogin(token: string, email: string) {
+        /* run this from an interceptor. */
         return await this.tokenService.verifyAccessToken(token, email);
         /* grab the notification status and "manage" it. */
     }
@@ -264,22 +238,6 @@ export class TeachersServices {
         teacher && teacher.subjects.push(...body);
         const savedTeacher = (await teacher.save()).subjects;
         return { data: savedTeacher };
-    }
-
-    public async uploadToNotes(notes: CreateNoteDto) {
-        const { body, encryptionKey } = notes;
-        const result = await this.tokenService.verifyEncryptedKeys(encryptionKey);
-        if (!result) throw new UnauthorizedException('Encryption key is invalid!');
-
-        const teacher = await this.teacherModel.findOne({ phoneNumber: body.teacherId })
-            .select(['firstName', 'lastName', 'phoneNumber', 'notes'])
-            .exec();
-        if (!teacher) throw new NotFoundException("Teacher's account not found!");
-        //todo: find out what it takes to upload a blob to mongodb (* or maybe Postgres)
-        const note = new this.notes({ ...body });
-        note.teacher = teacher;
-        const populated = (await note.save()).populate('teacher');
-        return { data: populated };
     }
 
     public async uploadToTests(tests: CreateTestDto) {

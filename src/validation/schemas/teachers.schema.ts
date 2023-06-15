@@ -18,18 +18,6 @@ export const SubjectSchema = joi.object({
 })
 
 /** specific to POST operations. */
-export const NotesSchema = joi.object({
-    body: joi.object({
-        data: joi.any(),
-        class: joi.string().required(),
-        subject: joi.string().required(),
-        teacherId: joi.string().required(),
-        dateUploaded: joi.string().required(),
-    }),
-    encryptionKey: joi.string().required(),
-})
-
-/** specific to POST operations. */
 export const TestsSchema = joi.object({
     body: joi.object({
         date: joi.date(),

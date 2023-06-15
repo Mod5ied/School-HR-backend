@@ -2,9 +2,6 @@ import { Teacher } from 'src/entity/primary_entities/staff/teachers/teachers.mod
 import { Student } from 'src/entity/primary_entities/students/students.models';
 import { Bursary } from 'src/entity/primary_entities/staff/bursary/busary.model';
 
-/** Note: Al type defs for Primary entities and Auth systems
-    are defined in this file! */
-
 /* tokens type def. */
 type Permissions = {
   read: boolean;
