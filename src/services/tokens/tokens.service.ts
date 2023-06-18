@@ -113,42 +113,53 @@ export class TokenService {
     return { aTokenDeleted, rTokenDeleted }
   }
 
-  /** verifies access-tokens and responds to client.  */
+  /** verifies access-tokens(with email) and responds to client.  */
   public async verifyAccessToken(token: string, email: string) {
-    const validToken = await this.cryptService.decryptTokens(token, email)
+    const validToken = await this.cryptService.decryptTokens(token, email);
     // if (!validToken.match) throw new UnauthorizedException('Token verification failed - Invalid token')
     if (!validToken.match) return null
     /* throw the error from the interceptor. */
 
-    return this.responseService.respondToClient(token, {
+    else return this.responseService.respondToClient(token, {
       role: validToken.doc.role, permissions: validToken.doc.tokenPermissions
     })
+  }
+
+  /** verifies access-tokens(with regNumber) and responds to client.  */
+  public async verifyAccessTokenWithRegNum(token: string, regNum: string) {
+    const validToken = await this.cryptService.decryptTokens(token, regNum);
+    if (!validToken.match) throw new UnauthorizedException('Token verification failed - Invalid token')
+    /* do nothing an move on to the next line of exec. */
   }
 
   /** generates an encryption key and caches it. Called at log-in. */
   public async generateEncryptedKeys(user: Partial<Users>) {
     const key = await this.cacheService.getCached('encryptedKey')
     if (key) return key
-
-    const encryptedKey = this.jwtService.sign({ role: user.role, permission: user.permissions },
-      { secret: ENCRYPT_SECRET })
-    //todo: to set cache to a max life of 8 hours.
-    encryptedKey && await this.cacheService.setCache('encryptedKey', encryptedKey)
-    return encryptedKey
+    else {
+      const encryptedKey = this.jwtService.sign({ role: user.role, permission: user.permissions },
+        { secret: ENCRYPT_SECRET })
+      //todo: to set cache to a max life of 8 hours.
+      encryptedKey && await this.cacheService.setCache('encryptedKey', encryptedKey)
+      return encryptedKey
+    }
   }
 
   /** verifies encryption keys and clears it from cache. Called by POST & UPDATE ops. */
   public async verifyEncryptedKeys(requestKey: string) {
     const result = await this.jwtService.verifyAsync(requestKey, { secret: ENCRYPT_SECRET })
     console.log("verify-encrypted-key result: ", result);
+    //Todo: return an error here, hence error mgt is limited to the verify function.
+    //! Check other dependents b4 implemnting above!
     if (!result) return null
-
-    try {
-      await this.cacheService.delCached('encryptedKey');
-      return true;
-    } catch (error) {
-      /* log the error in details, then proceed to cache again. */
-      await this.cacheService.delCached('encryptedKey');
+    else {
+      try {
+        await this.cacheService.delCached('encryptedKey');
+        return true;
+      } catch (error) {
+        /* log the error in details, then proceed to cache again. */
+        await this.cacheService.delCached('encryptedKey');
+      }
     }
   }
 }

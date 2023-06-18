@@ -12,16 +12,12 @@ export interface TokensSuccess {
   ok: boolean;
   code: number;
   metadata: {
-    data:
-      | string
-      | {
-          accessToken: string;
-          refreshToken?: string | undefined;
-        };
+    data: string | { accessToken: string; refreshToken?: string | undefined };
   };
 }
 
 export interface IToken {
+  regNum: string | undefined;
   role: string;
   token: string;
   tokenEmail: string;

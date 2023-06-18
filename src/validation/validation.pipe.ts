@@ -8,7 +8,6 @@ export class JoiPipe implements PipeTransform {
 
     transform(val: any) {
         const { error, value } = this.schema.validate(val, { abortEarly: false, })
-
         if (error) throw new BadRequestException(error.message)
         return value
     }

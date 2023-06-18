@@ -37,13 +37,6 @@ export class TeachersControllers {
         return this.teachersServices.fetchSubjects(firstname, school);
     }
 
-    /* reg-no must exist from (01-09) & (10-999), level can be either (senior|junior|pupil)*/
-    @Get('grades/:reg_numb(ss[1-3]-(?:0\\d|[1-9]\\d{0,2}))/(:level(senior|junior|pupil))')
-    async returnGrades(@Param() params: { reg_numb: string; level: string }) {
-        const { level, reg_numb } = params;
-        return this.teachersServices.fetchGrades(level, reg_numb);
-    }
-
     @Get('tests/:subject/:class')
     async returnTests(@Param() params: { subject: string; class: string }) {
         const { subject, class: _class } = params;
@@ -101,11 +94,6 @@ export class TeachersControllers {
     // @Patch("attendance")
     // async updateAttendance() {
     //     return this.teachersServices.runUpdateAttendance()
-    // }
-
-    // @Patch("grades")
-    // async updateGrades() {
-    //     return this.teachersServices.runUpdateGrades()
     // }
 
     // @Patch("notes")

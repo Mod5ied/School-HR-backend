@@ -1,3 +1,4 @@
+import { GradesModule } from './entity/tertiary_entities/academic_models/grades/grades.module';
 import { GlobalCacheModule } from './entity/primary_entities/_global/global-cache.module';
 import { TeachersModule } from './entity/primary_entities/staff/teachers/teachers.module';
 import { StudentsModule } from './entity/primary_entities/students/students.module';
@@ -12,6 +13,7 @@ import { Module } from '@nestjs/common';
 @Module({
   imports: [
     OtpModule,
+    GradesModule,
     TokensModule,
     TeachersModule,
     StudentsModule,
