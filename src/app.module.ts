@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
 import { NestCacheModule } from "./services/cache/cache.module";
 import { TokensModule } from './services/tokens/tokens.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitterModule } from "@nestjs/event-emitter"
 import { OtpModule } from './services/otp/otp.module';
 import { AppController } from './app.controller';
 import { Module } from '@nestjs/common';
@@ -19,6 +20,7 @@ import { Module } from '@nestjs/common';
     StudentsModule,
     NestCacheModule,
     GlobalCacheModule,
+    EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ cache: true }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
