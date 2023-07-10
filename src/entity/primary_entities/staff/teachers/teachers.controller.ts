@@ -1,46 +1,36 @@
 import {
     Controller,
-    Get,
     Post,
     Patch,
     Delete,
-    Param,
     Body,
     UseInterceptors,
+    UseGuards,
+    Get,
 } from '@nestjs/common';
-import { CreateSubjectsDto, CreateTeacherDto, CreateTestDto } from 'src/validation/dtos/teachers.dto';
-import { TestsSchema, TeachersSchema, SubjectSchema } from 'src/validation/schemas/teachers.schema';
-import { NumberInterceptor } from '../_interceptors/phone_number.intercept';
-import { GradeInterceptor } from '../_interceptors/grades.intercept';
+import { LogoutSchema, TeachersSchema, UpdateTeacherSchema, SubjectUpdateSchema, LoginSchema, FetchSchema, PermissionsSchema, TokenVerifySchema, OtpVerifySchema } from 'src/validation/schemas/teachers.schema';
+import { CreateTeacherDto, DeleteTeacherDto, LogoutDto, LoginDto, UpdateSubjectDto, UpdateTeacherDto, FetchTeachersDto, PermissionsDto, OtpVerify } from 'src/validation/dtos/teachers.dto';
+import { DeleteTeachersSchema } from 'src/validation/schemas/teachers.schema';
+import { VerifyUser } from 'src/services/tokens/tokens.types';
+import { TeachersInterceptor } from './teachers.intercept';
 import { JoiPipe } from 'src/validation/validation.pipe';
 import { TeachersServices } from './teachers.services';
+import { TeachersGuard } from './teachers.guard';
 
 @Controller('teachers')
-@UseInterceptors(NumberInterceptor, GradeInterceptor)
+@UseGuards(TeachersGuard)
+@UseInterceptors(TeachersInterceptor)
 export class TeachersControllers {
     constructor(private readonly teachersServices: TeachersServices) { }
 
-    /* retrieval routes */
-    @Get('attendance/:class')
-    async returnAttendance(@Param('class') _class: string) {
-        return this.teachersServices.fetchAttendance(_class);
+    @Get("")
+    async returnTeacher(@Body(new JoiPipe(FetchSchema)) payload: FetchTeachersDto) {
+        return await this.teachersServices.fetchTeacherAccount(payload)
     }
 
-    @Get('timetable/:lesson')
-    async returnTimetable(@Param('lesson') lesson: string) {
-        return this.teachersServices.fetchTimetable(lesson);
-    }
-
-    @Get('subjects/:firstname/:school')
-    async returnSubjects(@Param() params: { firstname: string; school: string }) {
-        const { firstname, school } = params;
-        return this.teachersServices.fetchSubjects(firstname, school);
-    }
-
-    @Get('tests/:subject/:class')
-    async returnTests(@Param() params: { subject: string; class: string }) {
-        const { subject, class: _class } = params;
-        return this.teachersServices.fetchTests(subject, _class);
+    @Get("all")
+    async returnAllTeachers(@Body(new JoiPipe(FetchSchema)) payload: FetchTeachersDto) {
+        return await this.teachersServices.fetchAllTeachers(payload);
     }
 
     /* record creation routes */
@@ -49,71 +39,53 @@ export class TeachersControllers {
         return await this.teachersServices.createAnAccount(teacher);
     }
 
-    @Post('account/token/:number/:school')
-    async tokenLogin(@Param() params: { number: string; school: string }) {
-        const { number, school } = params;
-        return await this.teachersServices.loginViaEmail(number, school);
+    @Post('account/login/token/')
+    async tokenLogin(@Body(new JoiPipe(LoginSchema)) payload: LoginDto) {
+        return await this.teachersServices.loginViaEmail(payload);
     }
 
-    @Post('account/otp/:number/:school')
-    async otpLogin(@Param() params: { number: string; school: string }) {
-        const { number, school } = params;
-        return await this.teachersServices.loginViaOTP(number, school);
+    @Post('account/login/otp/')
+    async otpLogin(@Body(new JoiPipe(LoginSchema)) payload: LoginDto) {
+        return await this.teachersServices.loginViaOTP(payload);
     }
 
-    //todo: place in delete ops.
-    @Post('account/logout/:number/:school')
-    async accountLogout(@Param() params: { number: string; school: string }) {
-        const { number, school } = params;
-        return await this.teachersServices.logoutAccount(number, school)
+    @Post('verify/token')
+    async tokenVerifyAccount(@Body(new JoiPipe(TokenVerifySchema)) payload: VerifyUser) {
+        return await this.teachersServices.verifyEmailLogin(payload);
     }
 
-    @Post('token/verify/:token/:email')
-    async tokenVerifyAccount(@Param() params: { token: string, email: string }) {
-        const { email, token } = params;
-        return await this.teachersServices.verifyEmailLogin(token, email)
+    @Post('verify/otp')
+    async otpVerifyAccount(@Body(new JoiPipe(OtpVerifySchema)) payload: OtpVerify) {
+        const { otp, phoneNumber } = payload;
+        return await this.teachersServices.verifyOtpLogin(otp, phoneNumber);
     }
 
-    @Post('otp/verify/:otp/:number')
-    async otpVerifyAccount(@Param() params: { otp: number, number: string }) {
-        const { number, otp } = params;
-        return await this.teachersServices.verifyOtpLogin(otp, number)
+    /* record updates routes */
+    @Patch('permissions')
+    async grantPermissions(@Body(new JoiPipe(PermissionsSchema)) data: PermissionsDto) {
+        return await this.teachersServices.grantTeacherPermissions(data);
     }
 
-    @Post('subjects/new')
-    async postToSubjects(@Body(new JoiPipe(SubjectSchema)) subjects: CreateSubjectsDto) {
-        return await this.teachersServices.uploadToSubjects(subjects);
+    @Patch("account/update")
+    async updateAccount(@Body(new JoiPipe(UpdateTeacherSchema)) data: UpdateTeacherDto) {
+        return await this.teachersServices.runUpdateAccount(data);
     }
 
-    @Post('tests/new')
-    async postToTests(@Body(new JoiPipe(TestsSchema)) tests: CreateTestDto) {
-        return await this.teachersServices.uploadToTests(tests);
+    @Patch("subjects/update")
+    async updateSubjects(@Body(new JoiPipe(SubjectUpdateSchema)) data: UpdateSubjectDto) {
+        return await this.teachersServices.runUpdateSubjects(data);
     }
 
-    // /* record updates routes */
-    // @Patch("attendance")
-    // async updateAttendance() {
-    //     return this.teachersServices.runUpdateAttendance()
-    // }
+    /* record deletion routes */
+    @Delete("account/logout")
+    async logoutAccount(@Body(new JoiPipe(LogoutSchema)) payload: LogoutDto) {
+        // async logoutAccount(@Body() payload: any) {
+        return await this.teachersServices.runLogoutAccount(payload);
+    }
 
-    // @Patch("notes")
-    // async updateNotes() {
-    //     return this.teachersServices.runUpdateNotes()
-    // }
-
-    // @Patch("tests")
-    // async updateTests() {
-    //     return this.teachersServices.runUpdateTests()
-    // }
-
-    // /* record deletion routes */
-    // @Delete("notes")
-    // async deleteNotes() {
-    //     return this.teachersServices.runDeleteNotes()
-    // }
-
-    // @Delete("tests")
-    // async deleteTests() {
-    //     return this.teachersServices.runDeleteTests()
-    // }
+    @Delete("account/purge")
+    async deleteAccount(@Body(new JoiPipe(DeleteTeachersSchema)) payload: DeleteTeacherDto) {
+        // async deleteAccount(@Body() payload: any) {
+        return this.teachersServices.runDeleteAccount(payload);
+    }
 }

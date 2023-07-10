@@ -57,7 +57,7 @@ export class AccessToken {
   role: string;
 
   /** `expiresAt` has a default value set to 10 hours from the creation time */
-  @Prop({ default: () => Date.now() + 10 * 60 * 60 * 1000, expires: 10 * 60 * 60 })
+  @Prop({ default: () => Date.now() + 10 * 60 * 60 * 1000, expires: 60 * 5 })
   expiresAt: Date;
 }
 

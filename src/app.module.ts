@@ -1,5 +1,4 @@
 import { GradesModule } from './entity/tertiary_entities/academic_models/grades/grades.module';
-import { GlobalCacheModule } from './entity/primary_entities/_global/global-cache.module';
 import { TeachersModule } from './entity/primary_entities/staff/teachers/teachers.module';
 import { StudentsModule } from './entity/primary_entities/students/students.module';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
@@ -10,6 +9,8 @@ import { EventEmitterModule } from "@nestjs/event-emitter"
 import { OtpModule } from './services/otp/otp.module';
 import { AppController } from './app.controller';
 import { Module } from '@nestjs/common';
+import { ResponseModule } from './services/broadcast/response/response.module';
+import {ScheduleModule} from "@nestjs/schedule"
 
 @Module({
   imports: [
@@ -17,9 +18,10 @@ import { Module } from '@nestjs/common';
     GradesModule,
     TokensModule,
     TeachersModule,
+    ResponseModule,
     StudentsModule,
     NestCacheModule,
-    GlobalCacheModule,
+    ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     ConfigModule.forRoot({ cache: true }),
     MongooseModule.forRootAsync({
