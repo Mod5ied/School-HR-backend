@@ -4,13 +4,13 @@ import { Schema, SchemaFactory, Prop } from "@nestjs/mongoose";
 export class Notice {
     @Prop()
     message: string
-    
-    @Prop()
-    dateUploaded: Date
 
-    @Prop()
-    uploadedBy: string
-    /* provide a dropdown to select from (director, principal, or VP) */
+    @Prop({ required: true, default: Date.now, get: (date: Date) => date.toISOString().split('T')[0] })
+    dateCreated: Date
+
+    /* we don't need this as it's already clear who sends the notices (Bursars & Directors). */
+    // @Prop()
+    // uploadedBy: string
 }
 
 export const NoticeSchema = SchemaFactory.createForClass(Notice)

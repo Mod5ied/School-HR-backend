@@ -17,18 +17,14 @@ export class NotesInterceptor implements NestInterceptor {
 
         if (method == "GET") {
             /* checks if its students or teachers that makes the get request before verifying token. */
-            const user = { role: request.body.noteBody.role }
             if (request.body.noteBody.hasOwnProperty('phoneNumber'))
-                await this.tokenService.verifyAccessToken(authToken, user);
+                await this.tokenService.verifyAccessToken(authToken);
             else if (request.body.noteBody.hasOwnProperty('regNum'))
-                await this.tokenService.verifyAccessToken(authToken, user);
+                await this.tokenService.verifyAccessToken(authToken);
 
             if (typeof request.params.subject == 'string') {
                 //todo: confirm this expression below:
                 return await this.cacheService.getCached(`${request.params.subject}-notes`) ?? next.handle();
-                // const cachedNote = await this.cacheService.getCached(`${request.params.subject}-notes`);
-                // if (cachedNote) return cachedNote;
-                // else return next.handle();
             }
             else {
                 const cachedNotes = await this.cacheService.getCached(`all-notes`)
@@ -39,8 +35,8 @@ export class NotesInterceptor implements NestInterceptor {
         else if (method == "POST" || "DELETE") {
             if (!request.body.noteBody)
                 throw new BadRequestException('Missing required params. Ensure request-noteBody is defined.');
-            const { encryptionKey, role } = request.body
-            await this.tokenService.verifyEncryptedKeys(encryptionKey, role);
+            const { encryptionKey } = request.body
+            await this.tokenService.verifyEncryptedKeys(encryptionKey);
             return next.handle();
         }
         else throw new BadRequestException('Request is invalid!');

@@ -9,8 +9,11 @@ export class CacheService {
     constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: CacheStore) { }
 
     public async setCache(key: string, value: any, ttl?: number) {
+        //Todo: automatically set all data to cache after 1-minute or 30-secs.
+        //Todo: Set a timeout here, if WRITE fails after timeout, return err.
         try {
-            return await this.cacheManager.set(key, JSON.stringify(value), { ttl })
+            await this.cacheManager.set(key, JSON.stringify(value), { ttl })
+            return true;
         } catch (error) {
             console.log('Error setting cache: ', error)
             /* Log the error! Then try setting cache again. */

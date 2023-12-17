@@ -8,7 +8,7 @@ import { Model } from 'mongoose';
 export class StudentsService {
   constructor(@InjectModel(Student.name) private readonly studentModel: Model<Student>) { }
 
-  async insertStudent(body: IStudent): Promise<IStudent> {
+  async insertStudent(body: IStudent) {
     const newStudent = new this.studentModel({
       regNumber: body.regNumber,
       firstname: body.firstname,
@@ -21,13 +21,13 @@ export class StudentsService {
     return response
   }
 
-  async fetchStudents(): Promise<IStudent[]> {
+  async fetchStudents() {
     const students = await this.studentModel.find().lean().exec();
     if (!students) throw new NotFoundException('Students were not found!')
     return students
   }
 
-  async fetchOneStudent(studentRegNum: string): Promise<IStudent> {
+  async fetchOneStudent(studentRegNum: string) {
     const student = await this.studentModel.findOne({ regNumber: studentRegNum }).lean();
     if (!student) throw new NotFoundException('Student was not found!');
     return student

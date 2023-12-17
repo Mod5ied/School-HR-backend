@@ -18,7 +18,7 @@ export class GradesInterceptor implements NestInterceptor {
         const path = request.url
 
         if (method == "GET") {
-            await this.tokenService.verifyAccessToken(authToken, request.params.reg_numb)
+            await this.tokenService.verifyAccessToken(authToken)
             const records = '/api/v1/grades/all';
             if (path == records) {
                 const cachedRecords = await this.cacheService.getCached('all-grades');
@@ -47,8 +47,9 @@ export class GradesInterceptor implements NestInterceptor {
             }
         }
         else if (method == "DELETE" || "POST" || "UPDATE") {
-            const { encryptionKey, role } = request.body;
-            const result = await this.tokenService.verifyEncryptedKeys(encryptionKey, role);
+            const { encryptionKey} = request.body;
+            //todo: move auth-related ops to GUARDS instead.
+            const result = await this.tokenService.verifyEncryptedKeys(encryptionKey);
             // if (result) return next.handle();
         }
         else return new NotImplementedException("Request is invalid and not implemented!")

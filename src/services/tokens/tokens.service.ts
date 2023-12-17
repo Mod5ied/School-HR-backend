@@ -10,6 +10,7 @@ import { CacheService } from '../cache/cache.service'
 import { InjectModel } from '@nestjs/mongoose'
 import { JwtService } from '@nestjs/jwt/dist'
 import { Model } from 'mongoose'
+import { Admin } from 'src/entity/primary_entities/admin/admin.model'
 
 @Injectable()
 export class TokenService {
@@ -18,6 +19,7 @@ export class TokenService {
     private readonly eventEmitter: EventEmitter2,
     private readonly cacheService: CacheService,
     private readonly jwtService: JwtService,
+    @InjectModel(Admin.name) private readonly adminModel: Model<Users>,
     @InjectModel(AccessToken.name) private readonly accessToken: Model<IToken>,
     @InjectModel(RefreshToken.name) private readonly refreshToken: Model<IToken>,
   ) { }
@@ -37,8 +39,9 @@ export class TokenService {
 
   /** `generateTokenDoc` create token doc (and deletes the doc after 5-minutes) for the user. */
   private async generateTokenDoc(model: Model<IToken>, user: Partial<Users>, token: string) {
-    const { email, permissions, role } = user
-    await model.create({ token, tokenEmail: email, tokenPermissions: permissions, role }
+    const { email, permissions, phoneNumber, role } = user
+
+    await model.create({ token, tokenEmail: email, tokenPermissions: permissions, role, phoneNumber }
     ).catch(error => {
       throw new BadRequestException(`AccessToken-Doc creation failed! - ${error.message}`)
     })
@@ -59,11 +62,12 @@ export class TokenService {
     const { email, role, permissions } = user
     const accessToken = await this.jwtService.signAsync(
       { email, role, permissions },
-      { expiresIn: '300', secret: ACCESS_SECRET },
+      { expiresIn: '1h', secret: ACCESS_SECRET },
     ).catch(error => {
       throw new Error(`AccessToken creation failed! - ${error.message}`)
     })
-    await this.generateTokenDoc(this.accessToken, user, accessToken)
+
+    if (accessToken) await this.generateTokenDoc(this.accessToken, user, accessToken)
     return accessToken;
   }
 
@@ -104,13 +108,13 @@ export class TokenService {
   async cacheAccessToken(payload: UserEncrypt) {
     const { user, hashedAccessToken } = payload;
     setTimeout(async () =>
-      await this.cacheService.setCache(`${user.phoneNumber}-accessToken`, hashedAccessToken, 28800), 10000);
+      await this.cacheService.setCache(`${user.phoneNumber}-accessToken`, hashedAccessToken, 3600), 10000);
   }
 
   /** generates an encryption key (with 8-hr ttl) and caches it(after 5-mins). Called at log-in. */
   public async generateEncryptedKeys(user: Partial<Users>) {
-    const encryptedKey = await this.jwtService.signAsync({ permission: user.permissions },
-      { secret: ENCRYPT_SECRET, expiresIn: '8h' });
+    const encryptedKey = await this.jwtService.signAsync({ permission: user.permissions, role: user.role },
+      { secret: ENCRYPT_SECRET, expiresIn: '1h' });
     this.eventEmitter.emit("cache-encryptedKey", { encryptedKey, user });
     return encryptedKey;
   }
@@ -132,29 +136,46 @@ export class TokenService {
   }
 
   /** verifies access-tokens(with regNumber or email).  */
-  public async verifyAccessToken(token: string, user: { role: string }) {
+  public async verifyAccessToken(token: string) {
     const USERS = ["director", "staff", "student"];
-    if (USERS.includes(user.role)) {
-      try {
-        return this.jwtService.verifyAsync(token, { secret: ACCESS_SECRET }) && true
-      } catch (error) {
-        throw new UnauthorizedException(`AccessToken verification failed - ${user.role}`);
-      }
+    try {
+      const { role } = await this.jwtService.verifyAsync(token, { secret: ACCESS_SECRET });
+      if (USERS.includes(role)) return true;
+      else throw new UnauthorizedException("Session validation failed - Invalid role!")
+
+    } catch (error) {
+      throw new UnauthorizedException(`session expired!`);
     }
-    else throw new UnauthorizedException("EncryptedKey validation failed - Invalid role!")
   }
 
-  /** verifies encryption keys. Called by POST & UPDATE ops. */
-  public async verifyEncryptedKeys(key: string, role: string) {
+  /** verifies encryption keys for UPDATE ops. @v1-1 would be called by POST ops. */
+  public async verifyEncryptedKeys(key: string) {
+    console.log(`key: ${key}`);
     const USERS = ["director", "staff", "student"];
-    if (USERS.includes(role)) {
-      try {
-        return await this.jwtService.verifyAsync(key, { secret: ENCRYPT_SECRET }) && true
-      } catch (error) {
-        throw new UnauthorizedException(`EncryptedKey validation failed - ${role}`);
-      }
+    try {
+      const r = await this.jwtService.verifyAsync(key, { secret: ENCRYPT_SECRET })
+      console.log(r);
+
+
+      // if (USERS.includes(role)) return true;
+      // else throw new UnauthorizedException("EncryptedKey validation failed - Invalid role!");
+    } catch (error) {
+      throw new UnauthorizedException(`encrypted-key is expired!`);
     }
-    else throw new UnauthorizedException("EncryptedKey validation failed - Invalid role!");
+  }
+
+  /** The admin-keys are generated once an admin account is created. 
+     It's a powerful yet limited key that can be used to CREATE and DELETE a Director account 
+     (and in effect all its studs & staff)
+  */
+  public async verifyAdminKeys(key: number, email: string) {
+    try {
+      const { adminKey } = await this.adminModel.findOne({ email }).lean();
+      if (adminKey === key) return true;
+      else return false;
+    } catch (err) {
+      throw new BadRequestException({ message: `Admin-key verification failed`, err })
+    }
   }
 
   /** `nullifyTokens` is called when client prematurely logs out of system.  */

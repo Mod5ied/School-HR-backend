@@ -1,23 +1,23 @@
-import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
-import { Permissions } from "./teachers.interface"
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Permissions } from '../teachers/teachers.interface';
 
-export interface Teachers {
+export interface Bursars {
   id: string | undefined;
   dateCreated: Date;
   lastUpdated: Date;
-  role: string;
-  school: string;
-  subjects: string[];
-  salary: string;
+  school: string
   phoneNumber: string;
   firstName: string;
   lastName: string;
   email: undefined | string;
+  role: string;
   permissions: Permissions;
+  dateOfBirth: Date;
+  maritalStatus: string;
 }
 
 @Schema({ strict: true })
-export class Teacher {
+export class Bursary {
   @Prop({ default: Date.now, get: (date: Date) => date.toISOString().split('T')[0] })
   dateCreated: Date
 
@@ -42,14 +42,20 @@ export class Teacher {
   @Prop({ required: true, lowercase: true })
   salary: string
 
-  @Prop({ required: true })
-  subjects: string[]
+  @Prop({ required: true, lowercase: true })
+  gender: string
 
   @Prop({ type: Object, default: { read: true, write: false, writeOwn: false } })
   permissions: { read: boolean, write: boolean, writeOwn: boolean }
 
   @Prop({ required: true, default: 'staff', immutable: true })
   role: string;
+
+  @Prop({ required: true })
+  dateOfBirth: Date
+
+  @Prop({ required: true })
+  maritalStatus: string
 }
 
-export const TeachersSchema = SchemaFactory.createForClass(Teacher);
+export const BursarySchema = SchemaFactory.createForClass(Bursary);

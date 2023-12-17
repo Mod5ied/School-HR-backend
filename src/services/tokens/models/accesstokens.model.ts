@@ -9,12 +9,12 @@ const validateEmail = (value: string) => {
 @Schema()
 export class AccessToken {
   /** `phoneNumber` identifies access-token (specifically for Staff and Director Entities.)  */
-  @Prop({ unique: true })
+  @Prop({ default: null, unique: true })
   phoneNumber: string
 
-  /** `regNum` or `tokeEmail` identifies access-token (specifically for Students Entities.) */
-  @Prop({ unique: true })
-  regNum: string
+  // /** `regNum` or `tokeEmail` identifies access-token (specifically for Students Entities.) */
+  // @Prop({ default: null, unique: true })
+  // regNum: string
 
   /** `tokenEmail` only checks if it has "@" and is more than 30 chars. */
   // @Prop({ lowercase: true, match: /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/, maxlength: 30 })
@@ -44,7 +44,7 @@ export class AccessToken {
   /* then the verifier ensures that only access-tokens with read & write permissions
      set to true can make lasting edits to any records or accounts.
   */
-  
+
   /** `tokenPermissions` specifies the permissions  available to Entity registered to token. */
   @Prop({ required: true, immutable: true, type: Object })
   tokenPermissions: {

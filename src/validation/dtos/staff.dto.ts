@@ -1,13 +1,3 @@
-export class FetchTeachersDto {
-    public phoneNumber: string
-    public email: string
-    public role: string
-    public range: {
-        start: number,
-        end: number | undefined
-    }
-}
-
 export class CreateTeacherDto {
     public phoneNumber: string
     public firstName: string
@@ -16,6 +6,17 @@ export class CreateTeacherDto {
     public salary: string
     public email: string
     public subjects: Array<string>
+}
+
+export class CreateBursarDto {
+    public phoneNumber: string
+    public firstName: string
+    public lastName: string
+    public school: string
+    public salary: string
+    public email: string
+    public dateOfBirth: Date
+    public maritalStatus: string
 }
 
 export class LogoutDto {
@@ -31,15 +32,19 @@ export class LoginDto {
     public email?: string
     public school: string
     public phoneNumber: string
+    public role: string
 }
 
 export class TokenVerify {
+    public role: string
     public email: string
     public token: string
+    public phoneNumber: string
 }
 
 export class OtpVerify {
     public otp: number
+    public role: string
     public phoneNumber: string
     public email?: string
 }
@@ -48,26 +53,43 @@ export class PermissionsDto {
     public encryptionKey: string
     public phoneNumber: string
     public email?: string | undefined
-    public status: {
+    public role: string
+    public updateBody: {
         read: true
         write: boolean
         writeOwn: boolean
     }
 }
 
-export class UpdateTeacherDto {
-    public encryptionKey: string
+export class FetchStaffDto {
     public phoneNumber: string
-    public firstName: string | undefined
-    public lastName: string | undefined
-    public school: string | undefined
-    public salary: string | undefined
-    public subjects: Array<string> | undefined
+    public email: string
     public role: string
-    public email?: string
+    public range?: {
+        start: number,
+        end: number | undefined
+    } | undefined
 }
 
-export class DeleteTeacherDto {
+export class UpdateStaffDto {
+    public encryptionKey: string
+    public phoneNumber: string
+    public email?: string
+    public role: string
+    public updateBody: {
+        phoneNumber: string
+        firstName: string | undefined
+        lastName: string | undefined
+        school: string | undefined
+        salary: string | undefined
+        subjects: Array<string> | undefined
+        role: string
+        email?: string
+        maritalStatus?: string | undefined
+    }
+}
+
+export class DeleteStaffDto {
     public encryptionKey: string
     public phoneNumber: string
     public email: string | undefined
@@ -83,7 +105,9 @@ export class CreateSubjectsDto {
 export class UpdateSubjectDto {
     public phoneNumber: string
     public encryptionKey: string
-    public subject: Array<string>
     public email?: string
     public role: string
+    public updateBody: {
+        subject: Array<string>
+    }
 }

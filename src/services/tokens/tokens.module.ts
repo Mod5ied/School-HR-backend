@@ -1,5 +1,6 @@
-import { AccessToken, AccessTokensSchema } from './models/accesstokens.model';
+import { Admin, AdminSchema } from 'src/entity/primary_entities/admin/admin.model';
 import { RefreshToken, RefreshTokenSchema } from './models/refreshtokens.model';
+import { AccessToken, AccessTokensSchema } from './models/accesstokens.model';
 import { ResponseService } from '../broadcast/response/response.services';
 import { CryptService } from '../encrypt/tokens.encrypt';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -10,8 +11,9 @@ import { JwtModule } from '@nestjs/jwt';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: AccessToken.name, schema: AccessTokensSchema },
       { name: RefreshToken.name, schema: RefreshTokenSchema },
+      { name: AccessToken.name, schema: AccessTokensSchema },
+      { name: Admin.name, schema: AdminSchema }
     ]),
     JwtModule.register({}),
   ],

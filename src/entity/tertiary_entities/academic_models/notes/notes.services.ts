@@ -2,8 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { SaveNotesSchema } from "src/validation/schemas/notes.schema";
 import { CacheService } from "src/services/cache/cache.service";
 import { CreateNotesDto } from "src/validation/dtos/notes.dto";
-import mongoose, { Model, LeanDocument } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
+import mongoose, { Model } from "mongoose";
 import { Notes } from "./notes.model";
 
 @Injectable()
@@ -15,11 +15,11 @@ export class NotesServices {
 
     /** accepts subject related to note as argument, e.g: fn('english') */
     public async fetchNotes(subject: string, teacherId: string) {
-        let notes: LeanDocument<Notes & { _id: mongoose.Types.ObjectId }>
-            | LeanDocument<Notes & { _id: mongoose.Types.ObjectId }>[];
+        let notes: mongoose.FlattenMaps<Notes> & { _id: mongoose.Types.ObjectId }
+            | (mongoose.FlattenMaps<Notes> & { _id: mongoose.Types.ObjectId })[];
 
         if (typeof subject === 'string') {
-            notes = await this.notesModel.findOne({ $and: [{ subject }, { teacherId }] }).lean().exec();
+            notes = await this.notesModel.findOne({ $and: [{ subject }, { teacherId }] }).lean()
             if (!notes) throw new NotFoundException(`Notes fetch error: ${notes}`);
         }
         else {
@@ -47,7 +47,7 @@ export class NotesServices {
     }
 
     public async deleteNotes(subject: string, teacherId: string) {
-        const [_, noteStatus] = await Promise.all([
+        const [/* _ */, noteStatus] = await Promise.all([
             this.cacheService.delCached(`${subject}-note`),
             this.notesModel.deleteOne({ $and: [{ subject }, { teacherId }] })
         ]).catch(err => { throw new BadRequestException(`Note delete operation failed: ${err}`) })

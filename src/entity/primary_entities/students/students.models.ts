@@ -1,44 +1,41 @@
-import { SeniorGrade, JuniorGrade } from 'src/entity/tertiary_entities/academic_models/grades/grades.model';
 import { Schema, SchemaFactory, Prop } from '@nestjs/mongoose';
-import * as mongoose from 'mongoose';
 import { Permissions } from './student.interface';
 
-@Schema()
+@Schema({ strict: true })
 export class Student {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   regNumber: string
 
   @Prop({ required: true, lowercase: true })
-  firstname: string;
+  firstName: string;
 
   @Prop({ required: true, lowercase: true })
-  lastname: string;
+  lastName: string;
 
   @Prop({ required: true, lowercase: true })
   gender: string;
 
   @Prop({ required: true })
-  dob: Date;
+  dateOfBirth: Date;
 
   @Prop({ default: 'student' })
   role: string;
 
-  @Prop({ required: true, type: Object })
+  @Prop({ type: Object, default: { read: true, write: false, writeOwn: false } })
   permissions: Permissions
 
-  /* OPTIONAL FIELDS */
-  @Prop({ lowercase: true })
+  @Prop({ required: false, lowercase: true })
   email: string;
 
-  @Prop({})
+  @Prop({ required: false })
   examNumber: string
 
-  /* if student is junior, 'juniorGrades' is populated, else 'seniorGrades' is populated */
-  @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'JuniorScore' } })
-  juniorGrades: JuniorGrade;
+  //todo: remove the js-generated timestamp and add the "timestamps: true" option to schema
+  @Prop({ default: Date.now, get: (date: Date) => date.toISOString().split('T')[0] })
+  dateCreated: Date   /* this is date specific. More emphasis is on the date. */
 
-  @Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'SeniorScore' } })
-  seniorGrades: SeniorGrade;
+  @Prop({ default: Date.now, get: (date: Date) => date.toISOString().split('T')[0] })
+  lastUpdated: Date    /* this is time specific. More emphasis is on the time. */
 }
 
 export const StudentSchema = SchemaFactory.createForClass(Student);
